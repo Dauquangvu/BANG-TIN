@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mỗi Ngày Một Lời Bác Dạy 2026</title>
+  <style>
+    :root {
+      --gold:    #c8941a;
+      --gold-lt: #f0d080;
+      --red:     #b71c1c;
+      --red-dk:  #7f0000;
+      --cream:   #fdf6e3;
+      --text:    #2c1a00;
+      --muted:   #6b4c1e;
+      --border:  #d4a843;
+      --shadow:  rgba(100,40,0,0.18);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      background: var(--red-dk);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── HEADER ── */
+    header {
+      width: 100%;
+      background: linear-gradient(135deg, var(--red-dk) 0%, var(--red) 60%, #c62828 100%);
+      border-bottom: 3px solid var(--gold);
+      padding: 18px 20px 14px;
+      text-align: center;
+      position: relative;
+    }
+    header .star { font-size: 2rem; color: var(--gold); line-height: 1; }
+    header h1 {
+      color: var(--gold-lt);
+      font-size: clamp(1.1rem, 3.5vw, 1.7rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      margin: 6px 0 2px;
+    }
+    header .subtitle {
+      color: #ffcdd2;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      font-style: italic;
+    }
+
+    /* ── MAIN CARD ── */
+    main {
+      width: 100%;
+      max-width: 760px;
+      padding: 24px 16px 40px;
+      flex: 1;
+    }
+
+    /* ── DATE NAV ── */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      background: var(--gold);
+      color: var(--red-dk);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .nav-btn:hover  { background: var(--gold-lt); transform: translateY(-1px); }
+    .nav-btn:active { transform: translateY(0); }
+    .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+    .date-display {
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(212,168,67,0.5);
+      border-radius: 8px;
+      padding: 7px 20px;
+      color: var(--gold-lt);
+      font-weight: 700;
+      font-size: 1rem;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    input[type="date"] {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      color: var(--gold-lt);
+      font-size: 0.9rem;
+      padding: 7px 12px;
+      cursor: pointer;
+      outline: none;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) sepia(1) hue-rotate(0deg) saturate(3); }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--cream);
+      border-radius: 14px;
+      border: 2px solid var(--border);
+      box-shadow: 0 8px 32px var(--shadow);
+      overflow: hidden;
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+    .card-header {
+      background: linear-gradient(135deg, var(--red) 0%, var(--red-dk) 100%);
+      padding: 16px 24px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid var(--gold);
+    }
+    .card-header .hicon { font-size: 2.2rem; }
+    .card-header .htitle {
+      color: var(--gold-lt);
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .card-header .hdate {
+      color: #fff;
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    /* ── QUOTE BLOCK ── */
+    .quote-block {
+      padding: 28px 28px 20px;
+      border-bottom: 1px solid #e8d5a0;
+    }
+    .quote-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--red);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .quote-text {
+      font-size: clamp(1.08rem, 2.8vw, 1.28rem);
+      font-weight: 700;
+      color: var(--red-dk);
+      line-height: 1.65;
+      font-style: italic;
+      border-left: 4px solid var(--gold);
+      padding-left: 16px;
+    }
+
+    /* ── SECTIONS ── */
+    .sections { padding: 22px 28px 26px; display: flex; flex-direction: column; gap: 18px; }
+
+    .section-block { }
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+      opacity: 0.5;
+    }
+    .section-text {
+      color: var(--text);
+      font-size: 0.95rem;
+      line-height: 1.72;
+    }
+
+    /* ── NO DATA ── */
+    .no-data {
+      text-align: center;
+      padding: 50px 24px;
+      color: var(--muted);
+    }
+    .no-data .nd-icon { font-size: 3rem; margin-bottom: 12px; }
+    .no-data p { font-size: 1rem; line-height: 1.6; }
+
+    /* ── FOOTER ── */
+    footer {
+      color: rgba(255,220,130,0.65);
+      font-size: 0.75rem;
+      text-align: center;
+      padding: 16px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── MONTH STATS BAR ── */
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .month-chip {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(212,168,67,0.35);
+      border-radius: 20px;
+      color: rgba(240,208,128,0.75);
+      font-size: 0.72rem;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .month-chip:hover, .month-chip.active {
+      background: rgba(200,148,26,0.3);
+      border-color: var(--gold);
+      color: var(--gold-lt);
+    }
+
+    @media (max-width: 500px) {
+      main { padding: 16px 8px 32px; }
+      .quote-block, .sections { padding-left: 16px; padding-right: 16px; }
+      .date-nav { gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="star">★</div>
+  <h1>MỖI NGÀY MỘT LỜI BÁC DẠY</h1>
+  <div class="subtitle">Học tập và làm theo tư tưởng, đạo đức, phong cách Hồ Chí Minh — 2026</div>
+</header>
+
+<main>
+  <!-- Month quick-nav -->
+  <div class="stats-row" id="monthNav"></div>
+
+  <!-- Date navigation -->
+  <div class="date-nav">
+    <button class="nav-btn" id="btnPrev">◀ Ngày trước</button>
+    <div class="date-display" id="displayDate">—</div>
+    <button class="nav-btn" id="btnNext">Ngày sau ▶</button>
+    <input type="date" id="datePicker" min="2026-01-01" max="2026-12-31" title="Chọn ngày" />
+    <button class="nav-btn" id="btnToday">Hôm nay</button>
+  </div>
+
+  <!-- Content card -->
+  <div class="card" id="contentCard">
+    <div class="no-data">
+      <div class="nd-icon">📖</div>
+      <p>Đang tải dữ liệu…</p>
+    </div>
+  </div>
+</main>
+
+<footer>Nguồn: Tổng hợp lời dạy của Chủ tịch Hồ Chí Minh &mdash; Dữ liệu 2026</footer>
+
+<script>
+const MONTHS_VI = ['','Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                   'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const DAYS_VI   = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+
+let DATA = {};
+let currentDate = '';
+
+// ── pad ──
+const pad = n => String(n).padStart(2,'0');
+
+// ── today 2026 key ──
+function todayKey() {
+  const now = new Date();
+  // Use 2026 as target year
+  const d = new Date(2026, now.getMonth(), now.getDate());
+  return `2026-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// ── all dates sorted ──
+function allDates() { return Object.keys(DATA).sort(); }
+
+// ── adjacent date in DATA ──
+function adjacentDate(key, dir) {
+  const dates = allDates();
+  const idx = dates.indexOf(key);
+  if (idx === -1) {
+    // find nearest
+    if (dir === -1) {
+      const before = dates.filter(d => d < key);
+      return before.length ? before[before.length-1] : null;
+    } else {
+      const after = dates.filter(d => d > key);
+      return after.length ? after[0] : null;
+    }
+  }
+  const next = idx + dir;
+  return (next >= 0 && next < dates.length) ? dates[next] : null;
+}
+
+// ── format display date ──
+function formatDate(key) {
+  if (!key) return '—';
+  const [y, m, d] = key.split('-').map(Number);
+  const dow = DAYS_VI[new Date(y, m-1, d).getDay()];
+  return `${dow}, ${d}/${m}/${y}`;
+}
+
+// ── render card ──
+function renderCard(key) {
+  const card = document.getElementById('contentCard');
+  const entry = DATA[key];
+
+  if (!entry) {
+    // Find nearest
+    const near = adjacentDate(key, 1) || adjacentDate(key, -1);
+    card.innerHTML = `
+      <div class="no-data">
+        <div class="nd-icon">🌸</div>
+        <p>Chưa có lời Bác dạy cho ngày này.<br>
+        ${near ? `<button class="nav-btn" style="margin-top:14px" onclick="goTo('${near}')">Xem ngày gần nhất</button>` : ''}
+        </p>
+      </div>`;
+    return;
+  }
+
+  const [y, m, d] = key.split('-').map(Number);
+  const dow = DAYS_VI[new Date(y, m-1, d).getDay()];
+
+  const sec = (label, icon, text) => text ? `
+    <div class="section-block">
+      <div class="section-label">${icon} ${label}</div>
+      <div class="section-text">${text}</div>
+    </div>` : '';
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="hicon">☭</div>
+      <div>
+        <div class="htitle">Lời Bác Dạy Ngày Này Năm Xưa</div>
+        <div class="hdate">${dow}, ngày ${d} ${MONTHS_VI[m]} ${y}</div>
+      </div>
+    </div>
+    <div class="quote-block">
+      <div class="quote-label">✦ Lời dạy</div>
+      <div class="quote-text">${entry.quote}</div>
+    </div>
+    <div class="sections">
+      ${sec('Xuất xứ', '📜', entry.source)}
+      ${sec('Ý nghĩa lịch sử', '🏛️', entry.context)}
+      ${sec('Vận dụng', '⭐', entry.lesson)}
+    </div>`;
+}
+
+// ── update UI ──
+function goTo(key) {
+  currentDate = key;
+  document.getElementById('displayDate').textContent = formatDate(key);
+  document.getElementById('datePicker').value = key;
+
+  const dates = allDates();
+  document.getElementById('btnPrev').disabled = !adjacentDate(key, -1);
+  document.getElementById('btnNext').disabled = !adjacentDate(key, 1);
+
+  // highlight month chip
+  const m = parseInt(key.split('-')[1]);
+  document.querySelectorAll('.month-chip').forEach(c => {
+    c.classList.toggle('active', +c.dataset.month === m);
+  });
+
+  renderCard(key);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── build month nav ──
+function buildMonthNav() {
+  const counts = {};
+  allDates().forEach(k => {
+    const m = k.split('-')[1];
+    counts[m] = (counts[m]||0)+1;
+  });
+  const nav = document.getElementById('monthNav');
+  for (let m = 1; m <= 12; m++) {
+    const mm = pad(m);
+    const cnt = counts[mm] || 0;
+    const chip = document.createElement('button');
+    chip.className = 'month-chip';
+    chip.dataset.month = m;
+    chip.textContent = `T${m} (${cnt})`;
+    chip.title = `${MONTHS_VI[m]} — ${cnt} ngày`;
+    chip.addEventListener('click', () => {
+      const first = allDates().find(k => k.startsWith(`2026-${mm}-`));
+      if (first) goTo(first);
+    });
+    nav.appendChild(chip);
+  }
+}
+
+// ── wire controls ──
+document.getElementById('btnPrev').addEventListener('click', () => {
+  const d = adjacentDate(currentDate, -1);
+  if (d) goTo(d);
+});
+document.getElementById('btnNext').addEventListener('click', () => {
+  const d = adjacentDate(currentDate, 1);
+  if (d) goTo(d);
+});
+document.getElementById('btnToday').addEventListener('click', () => goTo(todayKey()));
+document.getElementById('datePicker').addEventListener('change', e => goTo(e.target.value));
+
+// keyboard arrows
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft')  { const d = adjacentDate(currentDate,-1); if(d) goTo(d); }
+  if (e.key === 'ArrowRight') { const d = adjacentDate(currentDate, 1); if(d) goTo(d); }
+});
+
+// ── load data ──
+fetch('data.json')
+  .then(r => r.json())
+  .then(json => {
+    DATA = json;
+    buildMonthNav();
+    // go to today (2026), fallback to nearest available
+    const today = todayKey();
+    const start = DATA[today] ? today : (adjacentDate(today,1) || adjacentDate(today,-1) || allDates()[0]);
+    goTo(start);
+  })
+  .catch(() => {
+    document.getElementById('contentCard').innerHTML = `
+      <div class="no-data">
+        <div class="nd-icon">⚠️</div>
+        <p>Không tải được dữ liệu.<br>Hãy đảm bảo file <code>data.json</code> nằm cùng thư mục với <code>index.html</code>.</p>
+      </div>`;
+  });
+</script>
+</body>
+</html>

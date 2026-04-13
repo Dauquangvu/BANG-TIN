@@ -35,7 +35,7 @@ function parseRSS(xml) {
     const desc    = stripHtml(get('description'));
     const pubDate = get('pubDate');
     if (title && link) {
-      items.push({ title, link: link.trim(), excerpt: desc.slice(0, 220), pubDate });
+      items.push({ title, link: link.trim(), excerpt: desc.slice(0, 400), pubDate });
     }
     if (items.length >= 3) break;
   }

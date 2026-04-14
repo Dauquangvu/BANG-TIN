@@ -1,11 +1,24 @@
-// api/news.js — Dùng Claude web_search để tự đọc và tóm tắt tin
+/**
+ * api/news.js — Lấy RSS VnExpress, fetch bài server-side, tóm tắt với Claude
+ *
+ * ĐÃ SỬA:
+ *  1. Bỏ web_search tool — sai bản chất (tìm kiếm ≠ đọc URL cụ thể).
+ *     Đúng logic: server fetch article → strip HTML → gửi text thẳng cho Claude.
+ *  2. Tách getTag ra ngoài vòng lặp, nhận block làm tham số thay vì đóng gói biến.
+ *  3. Timeout phù hợp với giới hạn Vercel (hobby 10s / pro 30s).
+ */
+
 const RSS = {
   thegioi:   'https://vnexpress.net/rss/the-gioi.rss',
   trongnuoc: 'https://vnexpress.net/rss/thoi-su.rss'
 };
 
-function strip(html) {
+/* ── Helpers ── */
+
+function stripHtml(html) {
   return (html || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
@@ -13,79 +26,113 @@ function strip(html) {
     .replace(/\s+/g, ' ').trim();
 }
 
-function parseRSS(xml) {
-  var items = [];
-  var re = /<item[^>]*>([\s\S]*?)<\/item>/g;
-  var m;
+/**
+ * Tách tag từ một XML block — hàm thuần, không đóng gói biến ngoài scope.
+ * @param {string} block  - chuỗi XML của một <item>
+ * @param {string} tag    - tên tag cần lấy
+ */
+function getTag(block, tag) {
+  const re = new RegExp(
+    '<' + tag + '[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + tag + '>',
+    'i'
+  );
+  const m = re.exec(block);
+  return m ? m[1].trim() : '';
+}
+
+function parseRSS(xml, limit = 3) {
+  const items = [];
+  const re = /<item[^>]*>([\s\S]*?)<\/item>/g;
+  let m;
   while ((m = re.exec(xml)) !== null) {
-    var b = m[1];
-    function getTag(tag) {
-      var r = new RegExp('<' + tag + '[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + tag + '>', 'i');
-      var f = r.exec(b);
-      return f ? f[1].trim() : '';
-    }
-    var title   = strip(getTag('title'));
-    var link    = (getTag('link') || getTag('guid')).trim();
-    var desc    = strip(getTag('description'));
-    var pubDate = getTag('pubDate');
+    const b = m[1];
+    const title   = stripHtml(getTag(b, 'title'));
+    const link    = (getTag(b, 'link') || getTag(b, 'guid')).trim();
+    const desc    = stripHtml(getTag(b, 'description'));
+    const pubDate = getTag(b, 'pubDate');
     if (title && link) {
       items.push({ title, link, excerpt: desc.slice(0, 400), pubDate });
     }
-    if (items.length >= 3) break;
+    if (items.length >= limit) break;
   }
   return items;
 }
 
-// Dùng Claude với web_search tool để tự vào link, đọc và tóm tắt bài
-async function summarizeWithWebSearch(item) {
-  var key      = process.env.AI_API_KEY;
-  var base     = (process.env.AI_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, '');
-  var model    = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
-  var endpoint = base + '/v1/messages';
-
-  var reqBody = JSON.stringify({
-    model,
-    max_tokens: 1024,
-    tools: [{
-      type: 'web_search_20250305',
-      name: 'web_search'
-    }],
-    messages: [{
-      role: 'user',
-      content: `Hãy vào đọc bài báo tại link này: ${item.link}\n\nSau khi đọc xong toàn bộ nội dung bài báo, hãy viết phần tóm tắt gồm 4-5 câu tiếng Việt, nêu rõ: sự kiện gì xảy ra, ai liên quan, ở đâu, diễn biến chính và kết quả/ý nghĩa. Chỉ trả về đoạn tóm tắt, không thêm tiêu đề hay giải thích.`
-    }]
+/**
+ * Fetch nội dung bài báo từ URL, trả về plain text (tối đa ~6000 ký tự).
+ * Logic đúng: server gọi thẳng URL → không cần nhờ Claude "tìm kiếm".
+ */
+async function fetchArticleText(url) {
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+      'Accept':     'text/html,application/xhtml+xml',
+      'Accept-Language': 'vi-VN,vi;q=0.9'
+    },
+    signal: AbortSignal.timeout(9000)
   });
+  if (!res.ok) throw new Error('Fetch article HTTP ' + res.status);
+  const html = await res.text();
+  return stripHtml(html).slice(0, 6000);
+}
 
-  var r = await fetch(endpoint, {
+/**
+ * Tóm tắt bài báo bằng Claude — KHÔNG dùng tool.
+ * Quy trình đúng: text đã có → gửi thẳng → nhận tóm tắt.
+ */
+async function summarizeArticle(item) {
+  const key      = process.env.AI_API_KEY;
+  const base     = (process.env.AI_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, '');
+  const model    = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
+  const endpoint = base + '/v1/messages';
+
+  // Bước 1: lấy nội dung bài từ server (không qua Claude)
+  const articleText = await fetchArticleText(item.link);
+
+  // Bước 2: gửi text cho Claude tóm tắt — không cần tool nào
+  const r = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type':      'application/json',
       'x-api-key':         key,
       'anthropic-version': '2023-06-01'
     },
-    body:   reqBody,
-    signal: AbortSignal.timeout(45000)
+    body: JSON.stringify({
+      model,
+      max_tokens: 512,
+      messages: [{
+        role: 'user',
+        content:
+          `Tiêu đề bài báo: "${item.title}"\n\n` +
+          `Nội dung:\n${articleText}\n\n` +
+          `Hãy viết tóm tắt 4-5 câu tiếng Việt, nêu rõ: sự kiện gì xảy ra, ` +
+          `ai liên quan, ở đâu, diễn biến chính và kết quả/ý nghĩa. ` +
+          `Chỉ trả về đoạn tóm tắt, không thêm tiêu đề hay giải thích.`
+      }]
+    }),
+    signal: AbortSignal.timeout(28000)
   });
 
   if (!r.ok) {
-    var errText = await r.text();
-    throw new Error('AI ' + r.status + ': ' + errText.slice(0, 200));
+    const errText = await r.text();
+    throw new Error('Claude API ' + r.status + ': ' + errText.slice(0, 200));
   }
 
-  var d = await r.json();
-  // Lấy text block cuối cùng (sau khi AI đã dùng web_search xong)
-  var textBlocks = (d.content || []).filter(b => b.type === 'text');
-  if (textBlocks.length === 0) throw new Error('AI không trả về text');
-  return textBlocks[textBlocks.length - 1].text.trim();
+  const d = await r.json();
+  const textBlock = (d.content || []).find(b => b.type === 'text');
+  if (!textBlock) throw new Error('Claude không trả về text');
+  return textBlock.text.trim();
 }
+
+/* ── Handler ── */
 
 module.exports = async function(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json');
 
-  var type   = req.query.type;
-  var withAI = req.query.ai === '1';
+  const type   = req.query.type;
+  const withAI = req.query.ai === '1';
 
   if (!RSS[type]) {
     return res.status(400).json({ error: 'type phải là: thegioi hoặc trongnuoc' });
@@ -93,34 +140,34 @@ module.exports = async function(req, res) {
 
   try {
     // 1. Lấy danh sách tin từ RSS
-    var rssRes = await fetch(RSS[type], {
+    const rssRes = await fetch(RSS[type], {
       headers: { 'User-Agent': 'Mozilla/5.0 BangTin/2.0' },
       signal:  AbortSignal.timeout(8000)
     });
-    if (!rssRes.ok) throw new Error('RSS ' + rssRes.status);
-    var xml   = await rssRes.text();
-    var items = parseRSS(xml);
+    if (!rssRes.ok) throw new Error('RSS HTTP ' + rssRes.status);
+    const xml   = await rssRes.text();
+    const items = parseRSS(xml, 3);
     if (items.length === 0) throw new Error('Không parse được tin từ RSS');
 
-    // 2. Nếu yêu cầu AI → cho AI tự vào đọc từng bài (2 bài đầu)
+    // 2. Nếu yêu cầu AI: fetch + tóm tắt 2 bài đầu song song
     if (withAI && process.env.AI_API_KEY) {
-      var toSum = items.slice(0, 2);
-      // Chạy song song 2 bài
-      var results = await Promise.allSettled(
-        toSum.map(it => summarizeWithWebSearch(it))
+      const toSum = items.slice(0, 2);
+      const results = await Promise.allSettled(
+        toSum.map(it => summarizeArticle(it))
       );
-      results.forEach(function(result, i) {
+      results.forEach((result, i) => {
         if (result.status === 'fulfilled' && result.value) {
           toSum[i].summary = result.value;
         } else {
-          console.error('Bài', i + 1, 'lỗi:', result.reason?.message);
+          console.error('[news] Bài', i + 1, 'lỗi:', result.reason?.message);
         }
       });
     }
 
     return res.status(200).json({ items });
 
-  } catch (e) {
+  } catch(e) {
+    console.error('[news] Error:', e.message);
     return res.status(500).json({ error: e.message });
   }
 };

@@ -719,6 +719,49 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
   ★ Bảng Tin Trung đoàn 1 — Sư đoàn 324 &mdash; Dữ liệu 2026 ★
 </footer>
 
+<!-- ══ AI CHAT BUBBLE ══ -->
+<button class="ai-bubble" id="aiBubble" title="AI đọc & tóm tắt bài báo">
+  🤖
+  <span class="ai-bubble-label">Dán link → AI tóm tắt</span>
+</button>
+
+<!-- ══ AI SUMMARIZE MODAL ══ -->
+<div class="ai-modal-bg" id="aiModalBg">
+  <div class="ai-modal">
+    <div class="ai-modal-hd">
+      <span class="ai-modal-title">🤖 AI Đọc & Tóm Tắt Bài Báo</span>
+      <button class="ai-close-btn" id="aiCloseBtn">✕</button>
+    </div>
+    <div class="ai-modal-sub">Dán link bài báo bất kỳ → AI tự truy cập và tóm tắt 4–5 dòng</div>
+    <div class="ai-url-row">
+      <input class="ai-url-input" id="aiUrlInput" type="url"
+        placeholder="https://vnexpress.net/..." autocomplete="off"/>
+      <button class="ai-submit-btn" id="aiSubmitBtn">Tóm tắt</button>
+    </div>
+    <div class="ai-loading" id="aiLoading">⏳ AI đang đọc bài…</div>
+    <div class="ai-result" id="aiResult">
+      <div class="ai-result-title">🤖 Tóm tắt nội dung</div>
+      <div id="aiResultTitle" style="font-weight:700;margin-bottom:8px;color:var(--red-dk)"></div>
+      <div id="aiResultText"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PASSWORD MODAL ══ -->
+<div class="pwd-modal-bg" id="pwdModalBg">
+  <div class="pwd-modal">
+    <h3>🔐 Xác nhận dùng AI</h3>
+    <p>Nhập mật khẩu để AI đọc và tóm tắt tin.<br>Bỏ trống → chỉ làm mới không dùng AI.</p>
+    <input class="pwd-input" id="pwdInput" type="password"
+      placeholder="Mật khẩu…" autocomplete="off" maxlength="20"/>
+    <div class="pwd-btns">
+      <button class="pwd-cancel" id="pwdCancel">Huỷ</button>
+      <button class="pwd-ok" id="pwdOk">Xác nhận</button>
+    </div>
+    <div class="pwd-err" id="pwdErr">❌ Sai mật khẩu!</div>
+  </div>
+</div>
+
 <script>
 /* ════════════════════════════════════════════
    GLOBALS
@@ -751,7 +794,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
    SHARED HELPERS
 ════════════════════════════════════════════ */
 function todayKey() {
-  const n = new Date();
+  // Dùng múi giờ Việt Nam (UTC+7) để tránh lệch ngày khi chạy trên server quốc tế
+  const n = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
   return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
 }
 function formatDate(key) {
@@ -911,7 +955,7 @@ function adjWeek(key, dir) {
   return (n>=0&&n<wks.length) ? wks[n] : null;
 }
 function currentWeekKey() {
-  const n = new Date();
+  const n = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
   const yr = n.getFullYear();
   const d = new Date(yr, n.getMonth(), n.getDate());
   // Tính tuần theo thứ Hai: tuần 1 bắt đầu từ thứ Hai đầu tiên của tháng
@@ -6138,48 +6182,6 @@ Promise.resolve([_EMBEDDED_BAC, _EMBEDDED_QA, _EMBEDDED_WEEKS]).then(([bac, qa, 
   document.getElementById('luatCard').innerHTML = msg;
 });
 </script>
-<!-- ══ AI CHAT BUBBLE ══ -->
-<button class="ai-bubble" id="aiBubble" title="AI đọc & tóm tắt bài báo">
-  🤖
-  <span class="ai-bubble-label">Dán link → AI tóm tắt</span>
-</button>
-
-<!-- ══ AI SUMMARIZE MODAL ══ -->
-<div class="ai-modal-bg" id="aiModalBg">
-  <div class="ai-modal">
-    <div class="ai-modal-hd">
-      <span class="ai-modal-title">🤖 AI Đọc & Tóm Tắt Bài Báo</span>
-      <button class="ai-close-btn" id="aiCloseBtn">✕</button>
-    </div>
-    <div class="ai-modal-sub">Dán link bài báo bất kỳ → AI tự truy cập và tóm tắt 4–5 dòng</div>
-    <div class="ai-url-row">
-      <input class="ai-url-input" id="aiUrlInput" type="url"
-        placeholder="https://vnexpress.net/..." autocomplete="off"/>
-      <button class="ai-submit-btn" id="aiSubmitBtn">Tóm tắt</button>
-    </div>
-    <div class="ai-loading" id="aiLoading">⏳ AI đang đọc bài…</div>
-    <div class="ai-result" id="aiResult">
-      <div class="ai-result-title">🤖 Tóm tắt nội dung</div>
-      <div id="aiResultTitle" style="font-weight:700;margin-bottom:8px;color:var(--red-dk)"></div>
-      <div id="aiResultText"></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ PASSWORD MODAL ══ -->
-<div class="pwd-modal-bg" id="pwdModalBg">
-  <div class="pwd-modal">
-    <h3>🔐 Xác nhận dùng AI</h3>
-    <p>Nhập mật khẩu để AI đọc và tóm tắt tin.<br>Bỏ trống → chỉ làm mới không dùng AI.</p>
-    <input class="pwd-input" id="pwdInput" type="password"
-      placeholder="Mật khẩu…" autocomplete="off" maxlength="20"/>
-    <div class="pwd-btns">
-      <button class="pwd-cancel" id="pwdCancel">Huỷ</button>
-      <button class="pwd-ok" id="pwdOk">Xác nhận</button>
-    </div>
-    <div class="pwd-err" id="pwdErr">❌ Sai mật khẩu!</div>
-  </div>
-</div>
 
 </body>
 </html>

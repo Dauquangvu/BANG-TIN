@@ -11,11 +11,9 @@ const CORS_HEADERS = {
 };
 
 export default async function handler(req, res) {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return res.status(200).set(CORS_HEADERS).end();
   }
-
   Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
 
   if (req.method !== "POST") {
@@ -32,10 +30,10 @@ export default async function handler(req, res) {
   const AI_MODEL = process.env.AI_MODEL || "claude-haiku-4-5-20251001";
 
   if (!AI_API_KEY) {
-    return res.status(500).json({ error: "Thiếu AI_API_KEY" });
+    return res.status(500).json({ error: "Thiếu AI_API_KEY trong environment" });
   }
 
-  // ── BƯỚC 1: Lấy nội dung bài báo (bypass Cloudflare bằng r.jina.ai) ──
+  // ── BƯỚC 1: Lấy nội dung bài báo qua r.jina.ai (bypass Cloudflare) ──
   let articleText = "";
 
   try {
@@ -54,7 +52,6 @@ export default async function handler(req, res) {
 
     if (jinaRes.ok) {
       const text = await jinaRes.text();
-      // Jina trả về Markdown — loại bỏ dòng metadata đầu
       articleText = text
         .split("\n")
         .filter(
@@ -66,14 +63,14 @@ export default async function handler(req, res) {
         )
         .join("\n")
         .trim()
-        .slice(0, 6000); // giới hạn token
+        .slice(0, 6000);
     }
   } catch (_) {
-    // Jina thất bại → thử direct fetch
+    // Jina thất bại → thử direct fetch bên dưới
   }
 
-  // ── BƯỚC 2: Fallback — direct fetch nếu Jina thất bại ──
-  if (!articleText) {
+  // ── BƯỚC 2: Fallback — direct fetch ──
+  if (!articleText || articleText.length < 100) {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
@@ -95,28 +92,23 @@ export default async function handler(req, res) {
 
       const html = await directRes.text();
 
-      // Kiểm tra Cloudflare block
       if (
         html.includes("Just a moment") ||
         html.includes("cf-browser-verification") ||
         html.includes("_cf_chl")
       ) {
         return res.status(422).json({
-          error:
-            "Trang báo được bảo vệ bởi Cloudflare. Hãy thử link từ nguồn khác (Zing, Tuổi Trẻ, Thanh Niên...).",
+          error: "Trang bị chặn bởi Cloudflare. Thử link từ: Zing, Tuổi Trẻ, Thanh Niên...",
         });
       }
 
-      // Trích nội dung thô
-      const stripped = html
+      articleText = html
         .replace(/<script[\s\S]*?<\/script>/gi, "")
         .replace(/<style[\s\S]*?<\/style>/gi, "")
         .replace(/<[^>]+>/g, " ")
         .replace(/\s{2,}/g, " ")
         .trim()
         .slice(0, 6000);
-
-      articleText = stripped;
     } catch (err) {
       return res.status(502).json({ error: "Không thể truy cập URL: " + err.message });
     }
@@ -127,56 +119,78 @@ export default async function handler(req, res) {
   }
 
   // ── BƯỚC 3: Gửi lên Claude API ──
+  // Thử lần lượt các auth scheme vì proxy gwai.cloud có thể dùng Bearer thay x-api-key
   const endpoint = `${AI_BASE_URL}/v1/messages`;
-
-  let claudeRes;
-  try {
-    claudeRes = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": AI_API_KEY,
-        "anthropic-version": "2023-06-01",
+  const body = JSON.stringify({
+    model: AI_MODEL,
+    max_tokens: 1000,
+    messages: [
+      {
+        role: "user",
+        content: `Hãy tóm tắt bài báo sau bằng tiếng Việt trong 4-5 câu ngắn gọn, súc tích:\n\n${articleText}`,
       },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 1000,
-        messages: [
-          {
-            role: "user",
-            content: `Hãy tóm tắt bài báo sau bằng tiếng Việt trong 4-5 câu ngắn gọn, súc tích:\n\n${articleText}`,
-          },
-        ],
-      }),
-    });
-  } catch (err) {
-    return res.status(502).json({ error: "Không kết nối được Claude API: " + err.message });
+    ],
+  });
+
+  const authSchemes = [
+    // Scheme 1: chuẩn Anthropic
+    { "x-api-key": AI_API_KEY, "anthropic-version": "2023-06-01" },
+    // Scheme 2: Bearer (nhiều proxy dùng cái này)
+    { Authorization: `Bearer ${AI_API_KEY}`, "anthropic-version": "2023-06-01" },
+    // Scheme 3: Bearer không có anthropic-version (proxy tự thêm)
+    { Authorization: `Bearer ${AI_API_KEY}` },
+  ];
+
+  let lastStatus = 0;
+  let lastRaw = "";
+
+  for (const authHeaders of authSchemes) {
+    let claudeRes;
+    try {
+      claudeRes = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body,
+      });
+    } catch (err) {
+      return res.status(502).json({ error: "Không kết nối được Claude API: " + err.message });
+    }
+
+    const rawText = await claudeRes.text();
+
+    if (claudeRes.ok) {
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (_) {
+        return res
+          .status(500)
+          .json({ error: "Claude trả về không phải JSON", raw: rawText.slice(0, 300) });
+      }
+
+      const summary =
+        data?.content?.find((b) => b.type === "text")?.text ||
+        data?.content?.[0]?.text ||
+        "";
+
+      if (!summary) {
+        return res
+          .status(500)
+          .json({ error: "Claude không trả về nội dung", raw: rawText.slice(0, 300) });
+      }
+
+      return res.status(200).json({ summary });
+    }
+
+    lastStatus = claudeRes.status;
+    lastRaw = rawText;
+
+    // Chỉ retry nếu là lỗi auth (401/403)
+    if (claudeRes.status !== 401 && claudeRes.status !== 403) break;
   }
 
-  const rawText = await claudeRes.text();
-
-  if (!claudeRes.ok) {
-    return res.status(claudeRes.status).json({
-      error: `Claude API lỗi ${claudeRes.status}`,
-      detail: rawText.slice(0, 500),
-    });
-  }
-
-  let data;
-  try {
-    data = JSON.parse(rawText);
-  } catch (_) {
-    return res.status(500).json({ error: "Claude trả về không phải JSON", raw: rawText.slice(0, 300) });
-  }
-
-  const summary =
-    data?.content?.find((b) => b.type === "text")?.text ||
-    data?.content?.[0]?.text ||
-    "";
-
-  if (!summary) {
-    return res.status(500).json({ error: "Claude không trả về nội dung", raw: rawText.slice(0, 300) });
-  }
-
-  return res.status(200).json({ summary });
+  return res.status(lastStatus).json({
+    error: `Claude API lỗi ${lastStatus} — Key không hợp lệ hoặc hết quota trên proxy ${AI_BASE_URL}`,
+    detail: lastRaw.slice(0, 500),
+  });
 }

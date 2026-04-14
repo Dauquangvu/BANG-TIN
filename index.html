@@ -399,57 +399,160 @@
       font-weight: 700; font-size: 1rem; color: var(--red-dk);
     }
 
-    /* ── NEWS CARDS ── */
-    .news-refresh {
+    /* ── NEWS HEADER BAR ── */
+    .news-header-bar {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
+      background: rgba(255,255,255,.06); border-radius: 12px;
+      padding: 10px 16px; border: 1px solid rgba(212,168,67,.2);
     }
-    .news-time { color: rgba(240,208,128,.7); font-size: .78rem; }
-    .news-reload {
-      background: rgba(255,255,255,.12); border: 1px solid rgba(212,168,67,.4);
-      color: var(--gold-lt); border-radius: 20px; padding: 4px 14px;
-      font-size: .78rem; font-weight: 600; cursor: pointer; transition: background .2s;
+    .news-status {
+      display: flex; align-items: center; gap: 8px;
     }
-    .news-reload:hover { background: rgba(255,255,255,.22); }
-    .news-list { display: flex; flex-direction: column; gap: 14px; }
+    .news-status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #4caf50; box-shadow: 0 0 6px #4caf50;
+      animation: blink 2s infinite;
+    }
+    .news-status-dot.loading { background: #ff9800; box-shadow: 0 0 6px #ff9800; }
+    .news-status-dot.error   { background: #f44336; box-shadow: 0 0 6px #f44336; animation: none; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .news-time { color: rgba(240,208,128,.8); font-size: .78rem; font-style: italic; }
+    .news-btn-ai {
+      display: flex; align-items: center; gap: 7px;
+      background: linear-gradient(135deg, rgba(76,175,80,.25), rgba(33,150,243,.2));
+      border: 1px solid rgba(76,175,80,.5);
+      color: #a5d6a7; border-radius: 22px; padding: 7px 18px;
+      font-size: .8rem; font-weight: 700; cursor: pointer;
+      transition: all .25s; letter-spacing: .04em;
+    }
+    .news-btn-ai:hover {
+      background: linear-gradient(135deg, rgba(76,175,80,.4), rgba(33,150,243,.35));
+      border-color: rgba(76,175,80,.8); color: #e8f5e9;
+      box-shadow: 0 4px 16px rgba(76,175,80,.3);
+      transform: translateY(-1px);
+    }
+    .news-btn-ai .btn-icon { font-size: 1rem; }
+
+    /* ── NEWS CARDS ── */
+    .news-list { display: flex; flex-direction: column; gap: 16px; }
     .news-item {
-      background: var(--cream); border-radius: 12px;
+      background: var(--cream); border-radius: 14px;
       border: 2px solid var(--border); box-shadow: 0 4px 18px var(--shadow);
-      overflow: hidden; transition: box-shadow .2s;
+      overflow: hidden; transition: box-shadow .2s, transform .2s;
     }
-    .news-item:hover { box-shadow: 0 6px 26px rgba(100,40,0,.28); }
-    .news-item-hd {
-      padding: 14px 18px 10px;
-      border-bottom: 1px solid #e8d5a0;
-    }
-    .news-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 7px; flex-wrap: wrap; }
+    .news-item:hover { box-shadow: 0 8px 28px rgba(100,40,0,.3); transform: translateY(-2px); }
+    .news-item-hd { padding: 14px 18px 12px; }
+    .news-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
     .news-badge {
-      font-size: .68rem; font-weight: 700; letter-spacing: .08em; padding: 2px 8px;
+      font-size: .66rem; font-weight: 800; letter-spacing: .1em; padding: 3px 10px;
       border-radius: 20px; text-transform: uppercase;
     }
     .badge-world  { background: #e3f2fd; color: #1565c0; }
     .badge-nation { background: #fce4ec; color: #880e4f; }
-    .badge-ai     { background: #e8f5e9; color: #1b5e20; }
+    .badge-ai     { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
     .news-pub { font-size: .72rem; color: var(--muted); }
+    .news-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--red-dk); color: #fff;
+      font-size: .72rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
     .news-title {
-      font-size: 1rem; font-weight: 700; color: var(--red-dk);
-      line-height: 1.5; text-decoration: none; display: block;
+      font-size: 1.02rem; font-weight: 700; color: var(--red-dk);
+      line-height: 1.55; text-decoration: none; display: block;
     }
-    .news-title:hover { color: var(--blue); text-decoration: underline; }
+    .news-title:hover { color: #1565c0; text-decoration: underline; }
+    .news-divider { height: 1px; background: linear-gradient(90deg, transparent, #e8d5a0, transparent); margin: 0 18px; }
     .news-excerpt {
-      padding: 10px 18px; font-size: .9rem; color: #3a2a10; line-height: 1.7;
-      border-bottom: 1px solid #e8d5a0;
+      padding: 12px 18px; font-size: .88rem; color: #4a3520; line-height: 1.75;
     }
-    .news-summary-block { padding: 14px 18px 16px; background: #f1f8e9; border-top: 2px solid #c8e6c9; }
-    .news-summary-lbl { font-size: .72rem; font-weight: 700; letter-spacing:.1em; color:#1b5e20; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
-    .news-summary-lbl::after { content:''; flex:1; height:1px; background:#a5d6a7; }
-    .news-summary-txt { font-size: .93rem; color: #1a3300; line-height: 1.82; }
+    .news-summary-block {
+      padding: 14px 18px 16px;
+      background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+      border-top: 2px solid #c8e6c9;
+      position: relative;
+    }
+    .news-summary-block::before {
+      content: ''; position: absolute; top: 0; left: 18px; right: 18px;
+      height: 2px; background: linear-gradient(90deg, #4caf50, #81c784, transparent);
+    }
+    .news-summary-lbl {
+      font-size: .7rem; font-weight: 800; letter-spacing: .12em; color: #1b5e20;
+      text-transform: uppercase; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .news-summary-lbl::after { content: ''; flex: 1; height: 1px; background: #a5d6a7; }
+    .news-summary-txt { font-size: .92rem; color: #1a3300; line-height: 1.85; }
     .news-skeleton {
-      background: var(--cream); border-radius: 12px; border: 2px solid var(--border);
+      background: var(--cream); border-radius: 14px; border: 2px solid var(--border);
       padding: 20px; animation: pulse 1.4s infinite;
     }
-    .skel-line { height: 14px; background: #e8d5a0; border-radius: 4px; margin-bottom: 8px; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .skel-line { height: 14px; background: #e8d5a0; border-radius: 4px; margin-bottom: 10px; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── PASSWORD MODAL ── */
+    .pwd-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(10,5,0,.75); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .pwd-overlay.show { opacity: 1; pointer-events: all; }
+    .pwd-modal {
+      background: linear-gradient(160deg, #2a1a08, #1a0d04);
+      border: 2px solid rgba(212,168,67,.5);
+      border-radius: 20px; padding: 32px 28px 24px;
+      width: min(360px, 92vw);
+      box-shadow: 0 20px 60px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,200,80,.15);
+      transform: translateY(20px) scale(.96); transition: transform .25s;
+      text-align: center;
+    }
+    .pwd-overlay.show .pwd-modal { transform: translateY(0) scale(1); }
+    .pwd-modal-icon { font-size: 2.4rem; margin-bottom: 10px; }
+    .pwd-modal-title {
+      font-size: 1.05rem; font-weight: 800; color: var(--gold-lt);
+      letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px;
+    }
+    .pwd-modal-desc { font-size: .82rem; color: rgba(240,208,128,.65); margin-bottom: 22px; line-height: 1.6; }
+    .pwd-input-wrap { position: relative; margin-bottom: 16px; }
+    .pwd-input {
+      width: 100%; padding: 11px 44px 11px 16px; box-sizing: border-box;
+      background: rgba(255,255,255,.08); border: 1.5px solid rgba(212,168,67,.35);
+      border-radius: 12px; color: #f5e4c0; font-size: 1rem; font-weight: 600;
+      letter-spacing: .2em; text-align: center; outline: none;
+      transition: border-color .2s, background .2s;
+    }
+    .pwd-input:focus { border-color: rgba(212,168,67,.8); background: rgba(255,255,255,.12); }
+    .pwd-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: rgba(240,208,128,.5);
+      font-size: 1.1rem; padding: 4px;
+    }
+    .pwd-toggle:hover { color: var(--gold-lt); }
+    .pwd-error { color: #ef9a9a; font-size: .78rem; margin-bottom: 12px; min-height: 18px; }
+    .pwd-btns { display: flex; gap: 10px; }
+    .pwd-btn {
+      flex: 1; padding: 10px; border-radius: 12px; font-size: .85rem;
+      font-weight: 700; cursor: pointer; transition: all .2s; border: none;
+      letter-spacing: .04em;
+    }
+    .pwd-btn-cancel {
+      background: rgba(255,255,255,.08); color: rgba(240,208,128,.7);
+      border: 1.5px solid rgba(212,168,67,.2);
+    }
+    .pwd-btn-cancel:hover { background: rgba(255,255,255,.14); }
+    .pwd-btn-confirm {
+      background: linear-gradient(135deg, #1b5e20, #2e7d32);
+      color: #e8f5e9;
+      box-shadow: 0 4px 14px rgba(46,125,50,.4);
+    }
+    .pwd-btn-confirm:hover { background: linear-gradient(135deg, #2e7d32, #388e3c); transform: translateY(-1px); }
+    .pwd-hint {
+      margin-top: 14px; font-size: .74rem; color: rgba(240,208,128,.4);
+      border-top: 1px solid rgba(212,168,67,.1); padding-top: 12px;
+    }
 
     /* ── FOOTER ── */
     footer {
@@ -588,9 +691,14 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
 
   <!-- ══════ TAB 5: TIN THẾ GIỚI ══════ -->
   <div class="panel" id="tab-thegioi">
-    <div class="news-refresh">
-      <span class="news-time" id="timeTheGioi">⏳ Đang tải tin…</span>
-      <button class="news-reload" onclick="reloadNews('thegioi')">🔄 Làm mới / AI tóm tắt</button>
+    <div class="news-header-bar">
+      <div class="news-status">
+        <div class="news-status-dot loading" id="dotTheGioi"></div>
+        <span class="news-time" id="timeTheGioi">⏳ Đang tải tin…</span>
+      </div>
+      <button class="news-btn-ai" onclick="openPwdModal('thegioi')">
+        <span class="btn-icon">🤖</span> AI Tóm Tắt
+      </button>
     </div>
     <div class="news-list" id="listTheGioi">
       <div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>
@@ -601,9 +709,14 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
 
   <!-- ══════ TAB 6: TIN TRONG NƯỚC ══════ -->
   <div class="panel" id="tab-trongnuoc">
-    <div class="news-refresh">
-      <span class="news-time" id="timeTrongNuoc">⏳ Đang tải tin…</span>
-      <button class="news-reload" onclick="reloadNews('trongnuoc')">🔄 Làm mới / AI tóm tắt</button>
+    <div class="news-header-bar">
+      <div class="news-status">
+        <div class="news-status-dot loading" id="dotTrongNuoc"></div>
+        <span class="news-time" id="timeTrongNuoc">⏳ Đang tải tin…</span>
+      </div>
+      <button class="news-btn-ai" onclick="openPwdModal('trongnuoc')">
+        <span class="btn-icon">🤖</span> AI Tóm Tắt
+      </button>
     </div>
     <div class="news-list" id="listTrongNuoc">
       <div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>
@@ -613,6 +726,26 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
   </div>
 
 </main>
+
+<!-- ══ PASSWORD MODAL ══ -->
+<div class="pwd-overlay" id="pwdOverlay" onclick="closePwdModal(event)">
+  <div class="pwd-modal">
+    <div class="pwd-modal-icon">🤖</div>
+    <div class="pwd-modal-title">AI Tóm Tắt Tin Tức</div>
+    <div class="pwd-modal-desc">Nhập mật khẩu để AI đọc và tóm tắt<br>2 tin mới nhất (4-5 câu mỗi tin)</div>
+    <div class="pwd-input-wrap">
+      <input class="pwd-input" type="password" id="pwdInput" placeholder="••••••••"
+        maxlength="20" onkeydown="if(event.key==='Enter')confirmPwd()" autocomplete="off">
+      <button class="pwd-toggle" onclick="togglePwdVis()" tabindex="-1" id="pwdToggle">👁</button>
+    </div>
+    <div class="pwd-error" id="pwdError"></div>
+    <div class="pwd-btns">
+      <button class="pwd-btn pwd-btn-cancel" onclick="closePwdModal()">Huỷ</button>
+      <button class="pwd-btn pwd-btn-confirm" onclick="confirmPwd()">✨ Xác nhận</button>
+    </div>
+    <div class="pwd-hint">Để trống → Chỉ làm mới tin, không tốn token</div>
+  </div>
+</div>
 
 <footer>
   ★ Bảng Tin Trung đoàn 1 — Sư đoàn 324 &mdash; Dữ liệu 2026 ★
@@ -890,7 +1023,10 @@ function switchView(mode) {
    TABS 5 & 6 — NEWS
 ════════════════════════════════════════════ */
 const NEWS_CACHE = {};
+const NEWS_PWD = '324';  // ← đổi mật khẩu tại đây
+let _pwdTargetType = null;
 
+/* ── Helpers ── */
 function fmtPubDate(str) {
   if (!str) return '';
   try {
@@ -898,18 +1034,26 @@ function fmtPubDate(str) {
     return d.toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
   } catch { return str.slice(0,16); }
 }
+function setDot(type, state) {
+  const id = type === 'thegioi' ? 'dotTheGioi' : 'dotTrongNuoc';
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'news-status-dot' + (state === 'ok' ? '' : state === 'loading' ? ' loading' : ' error');
+}
 
+/* ── Render ── */
 function renderNews(type, items) {
-  const listId  = type === 'thegioi' ? 'listTheGioi'  : 'listTrongNuoc';
-  const timeId  = type === 'thegioi' ? 'timeTheGioi'  : 'timeTrongNuoc';
-  const badge   = type === 'thegioi'
+  const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
+  const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
+  const badge  = type === 'thegioi'
     ? '<span class="news-badge badge-world">🌍 Thế giới</span>'
     : '<span class="news-badge badge-nation">🇻🇳 Trong nước</span>';
 
   const hasAI = items && items.some(it => it.summary);
-  const now = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+  const now   = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
   document.getElementById(timeId).textContent =
-    (hasAI ? '🤖 AI đã tóm tắt — ' : '✅ ') + 'Cập nhật lúc ' + now;
+    (hasAI ? '🤖 AI tóm tắt — ' : '✅ Cập nhật ') + now;
+  setDot(type, 'ok');
 
   const list = document.getElementById(listId);
   if (!items || items.length === 0) {
@@ -917,75 +1061,92 @@ function renderNews(type, items) {
     return;
   }
 
-  list.innerHTML = items.map(item => `
+  list.innerHTML = items.map((item, idx) => `
     <div class="news-item">
       <div class="news-item-hd">
         <div class="news-meta">
+          <div class="news-num">${idx + 1}</div>
           ${badge}
-          ${item.summary ? '<span class="news-badge badge-ai">🤖 AI tóm tắt</span>' : ''}
+          ${item.summary ? '<span class="news-badge badge-ai">🤖 AI</span>' : ''}
           <span class="news-pub">${fmtPubDate(item.pubDate)}</span>
         </div>
         <a class="news-title" href="${item.link}" target="_blank" rel="noopener">${item.title}</a>
       </div>
+      <div class="news-divider"></div>
       ${item.summary ? `
-      <div class="news-summary-block">
-        <div class="news-summary-lbl">🤖 Tóm tắt nội dung</div>
-        <div class="news-summary-txt">${item.summary}</div>
-      </div>
-      <div class="news-readmore">
-        <a href="${item.link}" target="_blank" rel="noopener">🔗 Xem bài đầy đủ tại VNExpress ›</a>
-      </div>` : `
-      <div class="news-excerpt">${item.excerpt || '(Không có mô tả.)'}</div>
-      <div class="news-readmore">
-        <a href="${item.link}" target="_blank" rel="noopener">🔗 Xem thêm tại VNExpress ›</a>
-      </div>`}
+        <div class="news-summary-block">
+          <div class="news-summary-lbl">🤖 AI Tóm tắt</div>
+          <div class="news-summary-txt">${item.summary}</div>
+        </div>` : `
+        <div class="news-excerpt">${item.excerpt || '(Không có mô tả.)'}</div>`}
     </div>`).join('');
 }
 
-const NEWS_PWD = '324';  // ← đổi mật khẩu tại đây
-
+/* ── Load ── */
 async function loadNews(type, force = false, withAI = false) {
   if (!force && NEWS_CACHE[type] && !withAI) {
     renderNews(type, NEWS_CACHE[type]);
     return;
   }
-
   const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
   const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
-  const skeleCount = withAI ? 2 : 3;
 
+  setDot(type, 'loading');
   document.getElementById(timeId).textContent = withAI ? '🤖 AI đang đọc và tóm tắt…' : '⏳ Đang tải tin…';
-  document.getElementById(listId).innerHTML = Array(skeleCount).fill(0).map(() =>
+  document.getElementById(listId).innerHTML = Array(withAI ? 2 : 3).fill(0).map(() =>
     `<div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>`
   ).join('');
 
   try {
-    const url = `/api/news?type=${type}${withAI ? '&ai=1' : ''}`;
-    const res  = await fetch(url);
+    const res  = await fetch(`/api/news?type=${type}${withAI ? '&ai=1' : ''}`);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     if (!withAI) NEWS_CACHE[type] = data.items;
     renderNews(type, data.items);
   } catch (e) {
-    console.warn('News load failed:', e.message);
-    document.getElementById(timeId).textContent = '⚠️ Không tải được tin';
-    document.getElementById(listId).innerHTML = `<div class="no-data"><div class="nd-icon">📡</div><p>Chưa kết nối được API.<br><small style="color:#999">Cần deploy lên Vercel.</small></p></div>`;
+    setDot(type, 'error');
+    document.getElementById(timeId).textContent = '⚠️ Lỗi tải tin';
+    document.getElementById(listId).innerHTML =
+      `<div class="no-data"><div class="nd-icon">📡</div><p>Chưa kết nối được API.<br><small style="color:#999">Cần deploy lên Vercel.</small></p></div>`;
   }
 }
 
-function reloadNews(type) {
-  const pwd = prompt('🔐 Nhập mật khẩu để AI đọc và tóm tắt tin:');
-  if (pwd === null) return; // bấm Cancel
-  if (pwd === NEWS_PWD) {
-    loadNews(type, true, true); // có AI
-  } else if (pwd === '') {
-    loadNews(type, true, false); // chỉ làm mới, không AI
+/* ── Password Modal ── */
+function openPwdModal(type) {
+  _pwdTargetType = type;
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('pwdError').textContent = '';
+  document.getElementById('pwdInput').type = 'password';
+  document.getElementById('pwdToggle').textContent = '👁';
+  document.getElementById('pwdOverlay').classList.add('show');
+  setTimeout(() => document.getElementById('pwdInput').focus(), 200);
+}
+function closePwdModal(e) {
+  if (e && e.target !== document.getElementById('pwdOverlay')) return;
+  document.getElementById('pwdOverlay').classList.remove('show');
+}
+function togglePwdVis() {
+  const inp = document.getElementById('pwdInput');
+  const btn = document.getElementById('pwdToggle');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+function confirmPwd() {
+  const val  = document.getElementById('pwdInput').value;
+  const type = _pwdTargetType;
+  document.getElementById('pwdOverlay').classList.remove('show');
+  if (val === NEWS_PWD) {
+    loadNews(type, true, true);   // AI tóm tắt
+  } else if (val === '') {
+    loadNews(type, true, false);  // chỉ làm mới
   } else {
-    alert('❌ Sai mật khẩu! Nhập trống để làm mới không dùng AI.');
+    document.getElementById('pwdError').textContent = '❌ Sai mật khẩu';
+    document.getElementById('pwdOverlay').classList.add('show');
+    document.getElementById('pwdInput').focus();
   }
 }
 
-// Load news when switching to news tabs
+// Load news khi chuyển tab
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tab = btn.dataset.tab;
@@ -993,7 +1154,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     if (tab === 'tab-trongnuoc') loadNews('trongnuoc');
   });
 });
-
 
 document.addEventListener('keydown', e => {
   const active = document.querySelector('.tab-btn.active')?.dataset.tab;

@@ -485,6 +485,18 @@
     }
     .news-summary-lbl::after { content: ''; flex: 1; height: 1px; background: #a5d6a7; }
     .news-summary-txt { font-size: .92rem; color: #1a3300; line-height: 1.85; }
+    .news-readmore {
+      padding: 10px 18px 14px;
+      border-top: 1px solid #e8d5a0;
+    }
+    .news-readmore a {
+      font-size: .82rem; font-weight: 600; color: #1565c0;
+      text-decoration: none; letter-spacing: .02em;
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: color .2s;
+    }
+    .news-readmore a:hover { color: #0d47a1; text-decoration: underline; }
+
     .news-skeleton {
       background: var(--cream); border-radius: 14px; border: 2px solid var(--border);
       padding: 20px; animation: pulse 1.4s infinite;
@@ -1079,6 +1091,9 @@ function renderNews(type, items) {
           <div class="news-summary-txt">${item.summary}</div>
         </div>` : `
         <div class="news-excerpt">${item.excerpt || '(Không có mô tả.)'}</div>`}
+      <div class="news-readmore">
+        <a href="${item.link}" target="_blank" rel="noopener">🔗 Xem bài gốc trên VNExpress →</a>
+      </div>
     </div>`).join('');
 }
 

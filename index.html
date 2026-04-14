@@ -1103,31 +1103,33 @@ function reloadNews(type) {
   setTimeout(() => document.getElementById('pwdInput').focus(), 100);
 }
 
-document.getElementById('pwdCancel').addEventListener('click', () => {
-  document.getElementById('pwdModalBg').classList.remove('open');
-});
-document.getElementById('pwdOk').addEventListener('click', () => {
-  const val = document.getElementById('pwdInput').value.trim();
-  const errEl = document.getElementById('pwdErr');
-  errEl.style.display = 'none';
-  if (val === NEWS_PWD) {
+// ⚠️ pwd elements nằm SAU </script> → phải đăng ký sau khi DOM load xong
+window.addEventListener('load', function() {
+  document.getElementById('pwdCancel').addEventListener('click', () => {
     document.getElementById('pwdModalBg').classList.remove('open');
-    loadNews(_pendingNewsType, true); // CÓ AI
-  } else if (val === '') {
-    document.getElementById('pwdModalBg').classList.remove('open');
-    NEWS_CACHE[_pendingNewsType] = null; // xóa cache
-    loadNews(_pendingNewsType, false); // KHÔNG AI
-  } else {
-    errEl.style.display = 'block';
-  }
-});
-document.getElementById('pwdInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('pwdOk').click();
-});
-// Đóng modal khi click nền
-document.getElementById('pwdModalBg').addEventListener('click', e => {
-  if (e.target === document.getElementById('pwdModalBg'))
-    document.getElementById('pwdModalBg').classList.remove('open');
+  });
+  document.getElementById('pwdOk').addEventListener('click', () => {
+    const val = document.getElementById('pwdInput').value.trim();
+    const errEl = document.getElementById('pwdErr');
+    errEl.style.display = 'none';
+    if (val === NEWS_PWD) {
+      document.getElementById('pwdModalBg').classList.remove('open');
+      loadNews(_pendingNewsType, true);
+    } else if (val === '') {
+      document.getElementById('pwdModalBg').classList.remove('open');
+      NEWS_CACHE[_pendingNewsType] = null;
+      loadNews(_pendingNewsType, false);
+    } else {
+      errEl.style.display = 'block';
+    }
+  });
+  document.getElementById('pwdInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('pwdOk').click();
+  });
+  document.getElementById('pwdModalBg').addEventListener('click', e => {
+    if (e.target === document.getElementById('pwdModalBg'))
+      document.getElementById('pwdModalBg').classList.remove('open');
+  });
 });
 
 /* ════════════════════════════════════════════

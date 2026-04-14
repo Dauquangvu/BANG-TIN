@@ -1,7 +1,0 @@
-{
-  "version": 2,
-  "functions": {
-    "api/news.js":      { "maxDuration": 30 },
-    "api/summarize.js": { "maxDuration": 30 }
-  }
-}

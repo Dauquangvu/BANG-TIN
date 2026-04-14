@@ -1,3 +1,16 @@
 {
-  "version": 2
+  "version": 2,
+  "functions": {
+    "api/news.js": {
+      "maxDuration": 60
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    }
+  ]
 }

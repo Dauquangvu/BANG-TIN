@@ -1,3 +1,11 @@
 {
-  "version": 2
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/summarize", "destination": "/api/summarize" }
+  ],
+  "functions": {
+    "api/summarize.js": {
+      "maxDuration": 30
+    }
+  }
 }

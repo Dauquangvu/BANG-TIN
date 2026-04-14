@@ -730,25 +730,6 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
     </div>
     <div class="ai-modal-sub">Dán link bài báo bất kỳ → AI tự truy cập và tóm tắt 4–5 dòng</div>
 
-    <!-- API Key row -->
-    <div id="apiKeyRow" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <div style="flex:1;min-width:0;position:relative">
-        <input id="aiApiKeyInput" type="password" autocomplete="off"
-          placeholder="🔑 Nhập Anthropic API key (sk-ant-...)"
-          style="width:100%;padding:8px 36px 8px 12px;border:2px solid var(--border);border-radius:10px;
-                 font-size:.82rem;background:#fff8e8;outline:none;color:var(--text);"/>
-        <button id="toggleKeyVis" onclick="toggleKeyVisibility()"
-          style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
-                 background:none;border:none;cursor:pointer;font-size:.9rem;padding:0;line-height:1">👁</button>
-      </div>
-      <button onclick="saveApiKey()"
-        style="background:var(--gold);color:var(--red-dk);border:none;border-radius:10px;
-               padding:8px 14px;font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap">
-        💾 Lưu key
-      </button>
-    </div>
-    <div id="apiKeyStatus" style="font-size:.75rem;margin-bottom:10px;display:none"></div>
-
     <div class="ai-url-row">
       <input class="ai-url-input" id="aiUrlInput" type="url"
         placeholder="https://vnexpress.net/..." autocomplete="off"/>
@@ -1050,9 +1031,29 @@ function switchView(mode) {
 
 /* ════════════════════════════════════════════
    TABS 5 & 6 — NEWS (KHÔNG AUTO-CALL AI)
+   - Lưu tin vào localStorage → mọi người vào đều thấy
+   - Chỉ update khi nhập đúng mật khẩu
 ════════════════════════════════════════════ */
-const NEWS_CACHE = {};
+const NEWS_STORE_KEY = { thegioi: 'news_cache_thegioi', trongnuoc: 'news_cache_trongnuoc' };
 const NEWS_PWD   = '324'; // ← đổi mật khẩu tại đây
+
+// Lưu cache vào localStorage
+function saveNewsCache(type, items) {
+  try {
+    localStorage.setItem(NEWS_STORE_KEY[type], JSON.stringify({ items, ts: Date.now() }));
+  } catch(e) { /* quota exceeded – ignore */ }
+}
+
+// Đọc cache từ localStorage
+function loadNewsCache(type) {
+  try {
+    const raw = localStorage.getItem(NEWS_STORE_KEY[type]);
+    if (!raw) return null;
+    return JSON.parse(raw).items || null;
+  } catch(e) { return null; }
+}
+
+const NEWS_CACHE = {}; // runtime cache
 
 function fmtPubDate(str) {
   if (!str) return '';
@@ -1132,16 +1133,13 @@ function renderNews(type, items) {
     </div>`).join('');
 }
 
-/* ── Load news (KHÔNG gọi AI tự động) ── */
+/* ── Load news — chỉ khi nhập đúng mật khẩu ── */
 async function loadNews(type, withAI) {
   const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
   const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
 
-  // Nếu không dùng AI và đã cache → hiển thị luôn
-  if (!withAI && NEWS_CACHE[type]) { renderNews(type, NEWS_CACHE[type]); return; }
-
-  document.getElementById(timeId).textContent = withAI ? '🤖 AI đang đọc…' : '⏳ Đang tải tin…';
-  document.getElementById(listId).innerHTML = [0,1].map(() =>
+  document.getElementById(timeId).textContent = withAI ? '🤖 AI đang tóm tắt…' : '⏳ Đang tải tin…';
+  document.getElementById(listId).innerHTML = [0,1,2].map(() =>
     '<div class="news-skeleton"><div class="skel-line" style="width:80%"></div>' +
     '<div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>'
   ).join('');
@@ -1152,19 +1150,39 @@ async function loadNews(type, withAI) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    if (!withAI) NEWS_CACHE[type] = data.items;
+    // Lưu vào runtime cache VÀ localStorage để mọi người vào sau đều thấy
+    NEWS_CACHE[type] = data.items;
+    saveNewsCache(type, data.items);
     renderNews(type, data.items);
   } catch(e) {
     console.warn('News failed:', e.message);
-    document.getElementById(timeId).textContent = '⚠️ Không khả dụng trên GitHub Pages';
+    document.getElementById(timeId).textContent = '⚠️ Lỗi tải tin';
     document.getElementById(listId).innerHTML =
       '<div class="no-data"><div class="nd-icon">📡</div>' +
-      '<p>Tính năng đọc tin tức cần backend (Vercel).<br>' +
-      '<small style="color:#999">GitHub Pages chỉ hỗ trợ nội dung tĩnh — không chạy được API.</small></p></div>';
+      '<p>Không tải được tin tức.<br><small style="color:#999">Lỗi: ' + e.message + '</small></p></div>';
   }
 }
 
-/* ── Tab switch: KHÔNG tự động load tin — chỉ hiển thị cache nếu có ── */
+/* ── Khởi tạo: hiện tin đã lưu từ localStorage (không cần mật khẩu để xem) ── */
+function initNewsFromCache() {
+  ['thegioi', 'trongnuoc'].forEach(type => {
+    const cached = loadNewsCache(type);
+    if (cached) {
+      NEWS_CACHE[type] = cached;
+      const tabId  = type === 'thegioi' ? 'tab-thegioi' : 'tab-trongnuoc';
+      const timeId = type === 'thegioi' ? 'timeTheGioi'  : 'timeTrongNuoc';
+      const hasAI  = cached.some(it => it.summary);
+      if (document.getElementById(tabId).classList.contains('active')) {
+        renderNews(type, cached);
+      }
+      document.getElementById(timeId).textContent =
+        (hasAI ? '🤖 AI tóm tắt — ' : '✅ ') + 'Đã lưu sẵn (nhấn Làm mới để cập nhật)';
+    }
+  });
+}
+initNewsFromCache();
+
+/* ── Tab switch: hiện cache sẵn nếu có, không auto-load ── */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tab = btn.dataset.tab;
@@ -1172,21 +1190,32 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       if (NEWS_CACHE['thegioi']) {
         renderNews('thegioi', NEWS_CACHE['thegioi']);
       } else {
-        // Chỉ hiện trạng thái chờ, KHÔNG gọi API
-        document.getElementById('timeTheGioi').textContent = '🔒 Nhấn "Làm mới / AI tóm tắt" để tải tin';
-        document.getElementById('listTheGioi').innerHTML =
-          '<div class="no-data"><div class="nd-icon">📰</div>' +
-          '<p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>';
+        const fromLS = loadNewsCache('thegioi');
+        if (fromLS) {
+          NEWS_CACHE['thegioi'] = fromLS;
+          renderNews('thegioi', fromLS);
+        } else {
+          document.getElementById('timeTheGioi').textContent = '🔒 Nhấn "Làm mới / AI tóm tắt" để tải tin';
+          document.getElementById('listTheGioi').innerHTML =
+            '<div class="no-data"><div class="nd-icon">📰</div>' +
+            '<p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>';
+        }
       }
     }
     if (tab === 'tab-trongnuoc') {
       if (NEWS_CACHE['trongnuoc']) {
         renderNews('trongnuoc', NEWS_CACHE['trongnuoc']);
       } else {
-        document.getElementById('timeTrongNuoc').textContent = '🔒 Nhấn "Làm mới / AI tóm tắt" để tải tin';
-        document.getElementById('listTrongNuoc').innerHTML =
-          '<div class="no-data"><div class="nd-icon">📰</div>' +
-          '<p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>';
+        const fromLS = loadNewsCache('trongnuoc');
+        if (fromLS) {
+          NEWS_CACHE['trongnuoc'] = fromLS;
+          renderNews('trongnuoc', fromLS);
+        } else {
+          document.getElementById('timeTrongNuoc').textContent = '🔒 Nhấn "Làm mới / AI tóm tắt" để tải tin';
+          document.getElementById('listTrongNuoc').innerHTML =
+            '<div class="no-data"><div class="nd-icon">📰</div>' +
+            '<p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>';
+        }
       }
     }
   });
@@ -1243,95 +1272,36 @@ const aiResult  = document.getElementById('aiResult');
 
 aiBubble.addEventListener('click', () => {
   aiModalBg.classList.add('open');
-  aiUrlInput.value = ''; aiResult.classList.remove('show'); aiLoading.classList.remove('show');
-  // Load saved key
-  const saved = localStorage.getItem('anthropic_api_key') || '';
-  document.getElementById('aiApiKeyInput').value = saved;
-  updateKeyStatus(saved);
-  setTimeout(() => (saved ? aiUrlInput : document.getElementById('aiApiKeyInput')).focus(), 150);
+  aiUrlInput.value = '';
+  aiResult.classList.remove('show', 'ai-error');
+  aiLoading.classList.remove('show');
+  setTimeout(() => aiUrlInput.focus(), 150);
 });
 aiCloseBtn.addEventListener('click', () => aiModalBg.classList.remove('open'));
 aiModalBg.addEventListener('click', e => { if (e.target === aiModalBg) aiModalBg.classList.remove('open'); });
 
-/* ── API Key management ── */
-function toggleKeyVisibility() {
-  const inp = document.getElementById('aiApiKeyInput');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-}
-function updateKeyStatus(key) {
-  const el = document.getElementById('apiKeyStatus');
-  if (key && key.startsWith('sk-ant-')) {
-    el.style.display = 'block'; el.style.color = '#1b5e20';
-    el.textContent = '✅ Đã có API key — sẵn sàng tóm tắt';
-  } else if (key) {
-    el.style.display = 'block'; el.style.color = '#c62828';
-    el.textContent = '⚠️ Key không đúng định dạng (phải bắt đầu sk-ant-)';
-  } else {
-    el.style.display = 'block'; el.style.color = '#888';
-    el.textContent = '🔑 Chưa có key — lấy tại console.anthropic.com';
-  }
-}
-function saveApiKey() {
-  const key = document.getElementById('aiApiKeyInput').value.trim();
-  if (key) { localStorage.setItem('anthropic_api_key', key); showCopyToast('✅ Đã lưu API key!'); }
-  else { localStorage.removeItem('anthropic_api_key'); showCopyToast('🗑 Đã xoá API key'); }
-  updateKeyStatus(key);
-}
+/* ── API Key management — không cần nữa (dùng backend Vercel) ── */
 
 async function doSummarize() {
   const url = aiUrlInput.value.trim();
   if (!url || !url.startsWith('http')) { aiUrlInput.focus(); return; }
 
-  const apiKey = document.getElementById('aiApiKeyInput').value.trim() ||
-                 localStorage.getItem('anthropic_api_key') || '';
-  if (!apiKey) {
-    document.getElementById('aiResultTitle').textContent = '';
-    document.getElementById('aiResultText').textContent =
-      '⚠️ Vui lòng nhập Anthropic API key vào ô phía trên rồi nhấn 💾 Lưu key.';
-    aiResult.classList.add('ai-error', 'show');
-    document.getElementById('aiApiKeyInput').focus();
-    return;
-  }
-
   aiLoading.classList.add('show');
-  aiResult.classList.remove('show');
+  aiResult.classList.remove('show', 'ai-error');
   aiSubmit.disabled = true;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // Gọi backend Vercel — key được giữ bí mật phía server
+    const res = await fetch('/api/summarize', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 600,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        messages: [{
-          role: 'user',
-          content: 'Hãy truy cập và tóm tắt bài báo tại URL sau bằng 4-5 câu tiếng Việt rõ ràng, đầy đủ thông tin chính. Chỉ trả lời văn bản thuần tuý, không markdown. URL: ' + url
-        }]
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
     });
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      if (res.status === 401) throw new Error('API key không hợp lệ hoặc hết hạn. Kiểm tra lại key.');
-      throw new Error(errJson.error?.message || 'Lỗi API: HTTP ' + res.status);
-    }
-
     const data = await res.json();
-    let summary = '';
-    if (data.content) {
-      for (const block of data.content) {
-        if (block.type === 'text' && block.text) summary += block.text;
-      }
-    }
-    if (!summary) summary = '(Không có kết quả — bài có thể yêu cầu đăng nhập)';
+    if (!res.ok) throw new Error(data.error || 'Lỗi API: HTTP ' + res.status);
 
+    const summary = data.summary || '(Không có kết quả — bài có thể yêu cầu đăng nhập)';
     document.getElementById('aiResultTitle').textContent =
       url.replace(/^https?:\/\//, '').split('/').slice(0, 2).join('/');
     document.getElementById('aiResultText').textContent = summary;

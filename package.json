@@ -1,4 +1,6 @@
 {
-  "name": "bang-tin",
-  "version": "1.0.0"
+  "name": "bang-tin-trung-doan-1",
+  "version": "1.0.0",
+  "description": "Bảng Tin Trung đoàn 1 — Sư đoàn 324",
+  "engines": { "node": ">=18" }
 }

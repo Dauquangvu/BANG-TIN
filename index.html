@@ -690,26 +690,22 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
   <!-- ══════ TAB 5: TIN THẾ GIỚI ══════ -->
   <div class="panel" id="tab-thegioi">
     <div class="news-refresh">
-      <span class="news-time" id="timeTheGioi">⏳ Đang tải tin…</span>
+      <span class="news-time" id="timeTheGioi">🔒 Nhập mật khẩu để tải tin</span>
       <button class="news-reload" onclick="reloadNews('thegioi')">🔄 Làm mới / AI tóm tắt</button>
     </div>
     <div class="news-list" id="listTheGioi">
-      <div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>
-      <div class="news-skeleton"><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:50%"></div><div class="skel-line" style="width:85%"></div></div>
-      <div class="news-skeleton"><div class="skel-line" style="width:75%"></div><div class="skel-line" style="width:65%"></div><div class="skel-line" style="width:80%"></div></div>
+      <div class="no-data"><div class="nd-icon">📰</div><p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>
     </div>
   </div>
 
   <!-- ══════ TAB 6: TIN TRONG NƯỚC ══════ -->
   <div class="panel" id="tab-trongnuoc">
     <div class="news-refresh">
-      <span class="news-time" id="timeTrongNuoc">⏳ Đang tải tin…</span>
+      <span class="news-time" id="timeTrongNuoc">🔒 Nhập mật khẩu để tải tin</span>
       <button class="news-reload" onclick="reloadNews('trongnuoc')">🔄 Làm mới / AI tóm tắt</button>
     </div>
     <div class="news-list" id="listTrongNuoc">
-      <div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>
-      <div class="news-skeleton"><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:50%"></div><div class="skel-line" style="width:85%"></div></div>
-      <div class="news-skeleton"><div class="skel-line" style="width:75%"></div><div class="skel-line" style="width:65%"></div><div class="skel-line" style="width:80%"></div></div>
+      <div class="no-data"><div class="nd-icon">📰</div><p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>
     </div>
   </div>
 
@@ -750,8 +746,8 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
 <!-- ══ PASSWORD MODAL ══ -->
 <div class="pwd-modal-bg" id="pwdModalBg">
   <div class="pwd-modal">
-    <h3>🔐 Xác nhận dùng AI</h3>
-    <p>Nhập mật khẩu để AI đọc và tóm tắt tin.<br>Bỏ trống → chỉ làm mới không dùng AI.</p>
+    <h3>🔐 Xác nhận tải tin tức</h3>
+    <p>Nhập mật khẩu để tải và AI tóm tắt tin.<br><small style="color:#c62828">⚠️ Bắt buộc nhập đúng mật khẩu — không tự động tải để tiết kiệm token.</small></p>
     <input class="pwd-input" id="pwdInput" type="password"
       placeholder="Mật khẩu…" autocomplete="off" maxlength="20"/>
     <div class="pwd-btns">
@@ -1046,11 +1042,27 @@ function fmtPubDate(str) {
   } catch(e) { return str.slice(0,16); }
 }
 
+/* ── Toast thông báo copy ── */
+function showCopyToast(msg) {
+  let toast = document.getElementById('copyToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'copyToast';
+    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);' +
+      'background:#1b5e20;color:#fff;padding:8px 20px;border-radius:20px;font-size:.85rem;' +
+      'font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg || '✅ Đã sao chép link!';
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 1800);
+}
+
 function copyLink(url) {
-  navigator.clipboard.writeText(url).then(() => {
-    const el = document.getElementById('copyMsg');
-    if (el) { el.style.display='inline'; setTimeout(() => el.style.display='none', 1500); }
-  }).catch(() => { prompt('Copy link này:', url); });
+  navigator.clipboard.writeText(url)
+    .then(() => showCopyToast('✅ Đã sao chép link!'))
+    .catch(() => { prompt('Copy link này:', url); });
 }
 
 function renderNews(type, items) {
@@ -1132,12 +1144,31 @@ async function loadNews(type, withAI) {
   }
 }
 
-/* ── Tab switch: load tin KHÔNG dùng AI ── */
+/* ── Tab switch: KHÔNG tự động load tin — chỉ hiển thị cache nếu có ── */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tab = btn.dataset.tab;
-    if (tab === 'tab-thegioi')   loadNews('thegioi',   false);
-    if (tab === 'tab-trongnuoc') loadNews('trongnuoc', false);
+    if (tab === 'tab-thegioi') {
+      if (NEWS_CACHE['thegioi']) {
+        renderNews('thegioi', NEWS_CACHE['thegioi']);
+      } else {
+        // Chỉ hiện trạng thái chờ, KHÔNG gọi API
+        document.getElementById('timeTheGioi').textContent = '🔒 Nhấn "Làm mới / AI tóm tắt" để tải tin';
+        document.getElementById('listTheGioi').innerHTML =
+          '<div class="no-data"><div class="nd-icon">📰</div>' +
+          '<p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>';
+      }
+    }
+    if (tab === 'tab-trongnuoc') {
+      if (NEWS_CACHE['trongnuoc']) {
+        renderNews('trongnuoc', NEWS_CACHE['trongnuoc']);
+      } else {
+        document.getElementById('timeTrongNuoc').textContent = '🔒 Nhấn "Làm mới / AI tóm tắt" để tải tin';
+        document.getElementById('listTrongNuoc').innerHTML =
+          '<div class="no-data"><div class="nd-icon">📰</div>' +
+          '<p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>';
+      }
+    }
   });
 });
 
@@ -1163,10 +1194,10 @@ document.getElementById('pwdOk').addEventListener('click', () => {
     document.getElementById('pwdModalBg').classList.remove('open');
     loadNews(_pendingNewsType, true); // CÓ AI
   } else if (val === '') {
-    document.getElementById('pwdModalBg').classList.remove('open');
-    NEWS_CACHE[_pendingNewsType] = null; // xóa cache
-    loadNews(_pendingNewsType, false); // KHÔNG AI
+    errEl.textContent = '❌ Vui lòng nhập mật khẩu!';
+    errEl.style.display = 'block';
   } else {
+    errEl.textContent = '❌ Sai mật khẩu!';
     errEl.style.display = 'block';
   }
 });
@@ -1208,12 +1239,46 @@ async function doSummarize() {
   aiSubmit.disabled = true;
 
   try {
-    const res  = await fetch('/api/summarize?url=' + encodeURIComponent(url));
-    if (!res.ok) throw new Error('API không khả dụng trên GitHub Pages (cần deploy Vercel)');
+    // Gọi trực tiếp Anthropic API với web_search để đọc bài báo
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{
+          role: 'user',
+          content: 'Hãy truy cập và tóm tắt bài báo tại URL này bằng 4-5 câu tiếng Việt rõ ràng, đầy đủ thông tin chính. Chỉ trả lời văn bản thuần tuý, không markdown. URL: ' + url
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      // Nếu không có API key (unauthorized) → thông báo cần Vercel
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('Tính năng này cần cấu hình API key trên Vercel. Vui lòng deploy backend.');
+      }
+      throw new Error(errJson.error?.message || 'Lỗi API: ' + res.status);
+    }
+
     const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    document.getElementById('aiResultTitle').textContent = data.title || '';
-    document.getElementById('aiResultText').textContent  = data.summary || '(Không có kết quả)';
+    // Lấy text từ response (có thể có nhiều content blocks do tool use)
+    let summary = '';
+    if (data.content) {
+      for (const block of data.content) {
+        if (block.type === 'text' && block.text) summary += block.text;
+      }
+    }
+    if (!summary) summary = '(Không có kết quả)';
+
+    document.getElementById('aiResultTitle').textContent = url.replace(/^https?:\/\//, '').split('/').slice(0,2).join('/');
+    document.getElementById('aiResultText').textContent  = summary;
     aiResult.classList.remove('ai-error');
     aiResult.classList.add('show');
   } catch(e) {

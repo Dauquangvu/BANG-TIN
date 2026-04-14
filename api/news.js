@@ -69,7 +69,7 @@ async function fetchArticleText(url) {
       'Accept':     'text/html,application/xhtml+xml',
       'Accept-Language': 'vi-VN,vi;q=0.9'
     },
-    signal: AbortSignal.timeout(9000)
+    signal: AbortSignal.timeout(5000)
   });
   if (!res.ok) throw new Error('Fetch article HTTP ' + res.status);
   const html = await res.text();
@@ -110,7 +110,7 @@ async function summarizeArticle(item) {
           `Chỉ trả về đoạn tóm tắt, không thêm tiêu đề hay giải thích.`
       }]
     }),
-    signal: AbortSignal.timeout(28000)
+    signal: AbortSignal.timeout(22000)
   });
 
   if (!r.ok) {

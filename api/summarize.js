@@ -45,7 +45,7 @@ module.exports = async function(req, res) {
         'Accept':     'text/html,application/xhtml+xml',
         'Accept-Language': 'vi-VN,vi;q=0.9'
       },
-      signal: AbortSignal.timeout(9000)
+      signal: AbortSignal.timeout(5000)
     });
     if (!pageRes.ok) throw new Error('Không tải được trang: HTTP ' + pageRes.status);
 
@@ -78,7 +78,7 @@ module.exports = async function(req, res) {
             `Chỉ trả về đoạn tóm tắt, không thêm tiêu đề hay giải thích.`
         }]
       }),
-      signal: AbortSignal.timeout(28000)
+      signal: AbortSignal.timeout(22000)
     });
 
     if (!r.ok) {

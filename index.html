@@ -156,13 +156,13 @@
     .panel.active { display: block; animation: fadeIn 0.35s ease; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
 
-    /* ── DATE NAV ── */
+    /* ── DATE NAV — compact ── */
     .date-nav {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      margin-bottom: 18px;
+      gap: 6px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
     .nav-btn {
@@ -170,17 +170,17 @@
       color: var(--red-dk);
       border: none;
       border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 0.88rem;
+      padding: 6px 12px;
+      font-size: 0.82rem;
       font-weight: 700;
       cursor: pointer;
       transition: background 0.2s, transform 0.1s;
       white-space: nowrap;
     }
+    .nav-btn.arrow { padding: 6px 10px; font-size: 1rem; }
     .nav-btn:hover  { background: var(--gold-lt); transform: translateY(-1px); }
     .nav-btn:active { transform: none; }
     .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
-
     .nav-btn.blue { background: #5dade2; color: #fff; }
     .nav-btn.blue:hover { background: #85c1e9; }
 
@@ -188,29 +188,130 @@
       background: rgba(255,255,255,0.10);
       border: 1px solid rgba(212,168,67,0.5);
       border-radius: 8px;
-      padding: 7px 18px;
+      padding: 6px 14px;
       color: var(--gold-lt);
       font-weight: 700;
-      font-size: 0.95rem;
-      min-width: 170px;
+      font-size: 0.88rem;
+      min-width: 150px;
       text-align: center;
     }
     .date-display.blue {
       border-color: rgba(93,173,226,0.5);
       color: var(--blue-lt);
     }
-
     input[type="date"] {
       background: rgba(255,255,255,0.12);
       border: 1px solid var(--gold);
       border-radius: 8px;
       color: var(--gold-lt);
-      font-size: 0.88rem;
-      padding: 7px 10px;
+      font-size: 0.82rem;
+      padding: 6px 8px;
       outline: none;
       cursor: pointer;
+      width: 130px;
     }
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) sepia(1) saturate(3); }
+
+    /* ── AI MODAL ── */
+    .ai-modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 1000;
+      align-items: flex-end; justify-content: center;
+    }
+    .ai-modal-bg.open { display: flex; animation: slideUp .3s ease; }
+    @keyframes slideUp { from{transform:translateY(60px);opacity:0} to{transform:none;opacity:1} }
+    .ai-modal {
+      background: var(--cream); width: 100%; max-width: 860px;
+      border-radius: 18px 18px 0 0; padding: 20px 20px 28px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.35);
+    }
+    .ai-modal-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .ai-modal-title { font-size: 1rem; font-weight: 800; color: var(--red-dk); }
+    .ai-close-btn {
+      background: none; border: none; font-size: 1.4rem; cursor: pointer;
+      color: var(--muted); line-height: 1; padding: 2px 6px;
+    }
+    .ai-modal-sub { font-size: .8rem; color: var(--muted); margin-bottom: 12px; }
+    .ai-url-row { display: flex; gap: 8px; }
+    .ai-url-input {
+      flex: 1; padding: 10px 14px; border: 2px solid var(--border);
+      border-radius: 10px; font-size: .9rem; background: #fff8e8;
+      outline: none; color: var(--text);
+    }
+    .ai-url-input:focus { border-color: var(--gold); }
+    .ai-submit-btn {
+      background: var(--red); color: #fff; border: none;
+      border-radius: 10px; padding: 10px 18px; font-weight: 700;
+      font-size: .88rem; cursor: pointer; white-space: nowrap;
+      transition: background .2s;
+    }
+    .ai-submit-btn:hover { background: var(--red-dk); }
+    .ai-submit-btn:disabled { opacity: .5; cursor: default; }
+    .ai-result {
+      margin-top: 16px; padding: 14px 16px;
+      background: #f1f8e9; border-left: 4px solid #4caf50;
+      border-radius: 0 10px 10px 0; font-size: .93rem;
+      line-height: 1.82; color: #1a3300; display: none;
+    }
+    .ai-result.show { display: block; animation: fadeIn .3s; }
+    .ai-result-title {
+      font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+      color: #1b5e20; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .ai-loading { text-align: center; padding: 18px; color: var(--muted); display: none; }
+    .ai-loading.show { display: block; }
+    .ai-error { background: #fdecea; border-left-color: #e53935; color: #b71c1c; }
+
+    /* ── AI CHAT BUBBLE ── */
+    .ai-bubble {
+      position: fixed; bottom: 24px; right: 20px; z-index: 999;
+      width: 58px; height: 58px; border-radius: 50%;
+      background: linear-gradient(135deg, #1b5e20, #4caf50);
+      box-shadow: 0 4px 18px rgba(0,100,0,0.45);
+      border: none; cursor: pointer; font-size: 1.55rem;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .2s, box-shadow .2s;
+      animation: bubblePop .5s ease;
+    }
+    @keyframes bubblePop { 0%{transform:scale(0)} 70%{transform:scale(1.1)} 100%{transform:scale(1)} }
+    .ai-bubble:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(0,100,0,0.55); }
+    .ai-bubble-label {
+      position: absolute; bottom: 66px; right: 0;
+      background: #1b5e20; color: #fff; font-size: .72rem; font-weight: 700;
+      padding: 4px 10px; border-radius: 20px; white-space: nowrap;
+      pointer-events: none; opacity: 0; transition: opacity .2s;
+    }
+    .ai-bubble:hover .ai-bubble-label { opacity: 1; }
+
+    /* ── AI PASSWORD MODAL ── */
+    .pwd-modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6); z-index: 1100;
+      align-items: center; justify-content: center;
+    }
+    .pwd-modal-bg.open { display: flex; }
+    .pwd-modal {
+      background: var(--cream); border-radius: 14px; padding: 24px 24px 20px;
+      width: 90%; max-width: 360px; box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    .pwd-modal h3 { font-size: 1rem; color: var(--red-dk); margin-bottom: 6px; }
+    .pwd-modal p  { font-size: .82rem; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+    .pwd-input {
+      width: 100%; padding: 10px 14px; border: 2px solid var(--border);
+      border-radius: 10px; font-size: 1rem; background: #fff8e8;
+      outline: none; color: var(--text); margin-bottom: 14px;
+      letter-spacing: .15em;
+    }
+    .pwd-input:focus { border-color: var(--gold); }
+    .pwd-btns { display: flex; gap: 8px; }
+    .pwd-btns button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: .88rem; }
+    .pwd-ok  { background: var(--red); color: #fff; }
+    .pwd-ok:hover { background: var(--red-dk); }
+    .pwd-cancel { background: #e0e0e0; color: #333; }
+    .pwd-err { font-size: .8rem; color: #c62828; margin-top: 6px; display: none; }
 
     /* ── CHIP ROWS ── */
     .chip-row {
@@ -399,172 +500,57 @@
       font-weight: 700; font-size: 1rem; color: var(--red-dk);
     }
 
-    /* ── NEWS HEADER BAR ── */
-    .news-header-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 16px; flex-wrap: wrap; gap: 10px;
-      background: rgba(255,255,255,.06); border-radius: 12px;
-      padding: 10px 16px; border: 1px solid rgba(212,168,67,.2);
-    }
-    .news-status {
-      display: flex; align-items: center; gap: 8px;
-    }
-    .news-status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #4caf50; box-shadow: 0 0 6px #4caf50;
-      animation: blink 2s infinite;
-    }
-    .news-status-dot.loading { background: #ff9800; box-shadow: 0 0 6px #ff9800; }
-    .news-status-dot.error   { background: #f44336; box-shadow: 0 0 6px #f44336; animation: none; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .news-time { color: rgba(240,208,128,.8); font-size: .78rem; font-style: italic; }
-    .news-btn-ai {
-      display: flex; align-items: center; gap: 7px;
-      background: linear-gradient(135deg, rgba(76,175,80,.25), rgba(33,150,243,.2));
-      border: 1px solid rgba(76,175,80,.5);
-      color: #a5d6a7; border-radius: 22px; padding: 7px 18px;
-      font-size: .8rem; font-weight: 700; cursor: pointer;
-      transition: all .25s; letter-spacing: .04em;
-    }
-    .news-btn-ai:hover {
-      background: linear-gradient(135deg, rgba(76,175,80,.4), rgba(33,150,243,.35));
-      border-color: rgba(76,175,80,.8); color: #e8f5e9;
-      box-shadow: 0 4px 16px rgba(76,175,80,.3);
-      transform: translateY(-1px);
-    }
-    .news-btn-ai .btn-icon { font-size: 1rem; }
-
     /* ── NEWS CARDS ── */
-    .news-list { display: flex; flex-direction: column; gap: 16px; }
-    .news-item {
-      background: var(--cream); border-radius: 14px;
-      border: 2px solid var(--border); box-shadow: 0 4px 18px var(--shadow);
-      overflow: hidden; transition: box-shadow .2s, transform .2s;
+    .news-refresh {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; flex-wrap: wrap; gap: 8px;
     }
-    .news-item:hover { box-shadow: 0 8px 28px rgba(100,40,0,.3); transform: translateY(-2px); }
-    .news-item-hd { padding: 14px 18px 12px; }
-    .news-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+    .news-time { color: rgba(240,208,128,.7); font-size: .78rem; }
+    .news-reload {
+      background: rgba(255,255,255,.12); border: 1px solid rgba(212,168,67,.4);
+      color: var(--gold-lt); border-radius: 20px; padding: 4px 14px;
+      font-size: .78rem; font-weight: 600; cursor: pointer; transition: background .2s;
+    }
+    .news-reload:hover { background: rgba(255,255,255,.22); }
+    .news-list { display: flex; flex-direction: column; gap: 14px; }
+    .news-item {
+      background: var(--cream); border-radius: 12px;
+      border: 2px solid var(--border); box-shadow: 0 4px 18px var(--shadow);
+      overflow: hidden; transition: box-shadow .2s;
+    }
+    .news-item:hover { box-shadow: 0 6px 26px rgba(100,40,0,.28); }
+    .news-item-hd {
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid #e8d5a0;
+    }
+    .news-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 7px; flex-wrap: wrap; }
     .news-badge {
-      font-size: .66rem; font-weight: 800; letter-spacing: .1em; padding: 3px 10px;
+      font-size: .68rem; font-weight: 700; letter-spacing: .08em; padding: 2px 8px;
       border-radius: 20px; text-transform: uppercase;
     }
     .badge-world  { background: #e3f2fd; color: #1565c0; }
     .badge-nation { background: #fce4ec; color: #880e4f; }
-    .badge-ai     { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+    .badge-ai     { background: #e8f5e9; color: #1b5e20; }
     .news-pub { font-size: .72rem; color: var(--muted); }
-    .news-num {
-      width: 24px; height: 24px; border-radius: 50%;
-      background: var(--red-dk); color: #fff;
-      font-size: .72rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
     .news-title {
-      font-size: 1.02rem; font-weight: 700; color: var(--red-dk);
-      line-height: 1.55; text-decoration: none; display: block;
+      font-size: 1rem; font-weight: 700; color: var(--red-dk);
+      line-height: 1.5; text-decoration: none; display: block;
     }
-    .news-title:hover { color: #1565c0; text-decoration: underline; }
-    .news-divider { height: 1px; background: linear-gradient(90deg, transparent, #e8d5a0, transparent); margin: 0 18px; }
+    .news-title:hover { color: var(--blue); text-decoration: underline; }
     .news-excerpt {
-      padding: 12px 18px; font-size: .88rem; color: #4a3520; line-height: 1.75;
+      padding: 10px 18px; font-size: .9rem; color: #3a2a10; line-height: 1.7;
+      border-bottom: 1px solid #e8d5a0;
     }
-    .news-summary-block {
-      padding: 14px 18px 16px;
-      background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
-      border-top: 2px solid #c8e6c9;
-      position: relative;
-    }
-    .news-summary-block::before {
-      content: ''; position: absolute; top: 0; left: 18px; right: 18px;
-      height: 2px; background: linear-gradient(90deg, #4caf50, #81c784, transparent);
-    }
-    .news-summary-lbl {
-      font-size: .7rem; font-weight: 800; letter-spacing: .12em; color: #1b5e20;
-      text-transform: uppercase; margin-bottom: 10px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .news-summary-lbl::after { content: ''; flex: 1; height: 1px; background: #a5d6a7; }
-    .news-summary-txt { font-size: .92rem; color: #1a3300; line-height: 1.85; }
-    .news-readmore {
-      padding: 10px 18px 14px;
-      border-top: 1px solid #e8d5a0;
-    }
-    .news-readmore a {
-      font-size: .82rem; font-weight: 600; color: #1565c0;
-      text-decoration: none; letter-spacing: .02em;
-      display: inline-flex; align-items: center; gap: 4px;
-      transition: color .2s;
-    }
-    .news-readmore a:hover { color: #0d47a1; text-decoration: underline; }
-
+    .news-summary-block { padding: 14px 18px 16px; background: #f1f8e9; border-top: 2px solid #c8e6c9; }
+    .news-summary-lbl { font-size: .72rem; font-weight: 700; letter-spacing:.1em; color:#1b5e20; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+    .news-summary-lbl::after { content:''; flex:1; height:1px; background:#a5d6a7; }
+    .news-summary-txt { font-size: .93rem; color: #1a3300; line-height: 1.82; }
     .news-skeleton {
-      background: var(--cream); border-radius: 14px; border: 2px solid var(--border);
+      background: var(--cream); border-radius: 12px; border: 2px solid var(--border);
       padding: 20px; animation: pulse 1.4s infinite;
     }
-    .skel-line { height: 14px; background: #e8d5a0; border-radius: 4px; margin-bottom: 10px; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-    /* ── PASSWORD MODAL ── */
-    .pwd-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      background: rgba(10,5,0,.75); backdrop-filter: blur(6px);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity .25s;
-    }
-    .pwd-overlay.show { opacity: 1; pointer-events: all; }
-    .pwd-modal {
-      background: linear-gradient(160deg, #2a1a08, #1a0d04);
-      border: 2px solid rgba(212,168,67,.5);
-      border-radius: 20px; padding: 32px 28px 24px;
-      width: min(360px, 92vw);
-      box-shadow: 0 20px 60px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,200,80,.15);
-      transform: translateY(20px) scale(.96); transition: transform .25s;
-      text-align: center;
-    }
-    .pwd-overlay.show .pwd-modal { transform: translateY(0) scale(1); }
-    .pwd-modal-icon { font-size: 2.4rem; margin-bottom: 10px; }
-    .pwd-modal-title {
-      font-size: 1.05rem; font-weight: 800; color: var(--gold-lt);
-      letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px;
-    }
-    .pwd-modal-desc { font-size: .82rem; color: rgba(240,208,128,.65); margin-bottom: 22px; line-height: 1.6; }
-    .pwd-input-wrap { position: relative; margin-bottom: 16px; }
-    .pwd-input {
-      width: 100%; padding: 11px 44px 11px 16px; box-sizing: border-box;
-      background: rgba(255,255,255,.08); border: 1.5px solid rgba(212,168,67,.35);
-      border-radius: 12px; color: #f5e4c0; font-size: 1rem; font-weight: 600;
-      letter-spacing: .2em; text-align: center; outline: none;
-      transition: border-color .2s, background .2s;
-    }
-    .pwd-input:focus { border-color: rgba(212,168,67,.8); background: rgba(255,255,255,.12); }
-    .pwd-toggle {
-      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer; color: rgba(240,208,128,.5);
-      font-size: 1.1rem; padding: 4px;
-    }
-    .pwd-toggle:hover { color: var(--gold-lt); }
-    .pwd-error { color: #ef9a9a; font-size: .78rem; margin-bottom: 12px; min-height: 18px; }
-    .pwd-btns { display: flex; gap: 10px; }
-    .pwd-btn {
-      flex: 1; padding: 10px; border-radius: 12px; font-size: .85rem;
-      font-weight: 700; cursor: pointer; transition: all .2s; border: none;
-      letter-spacing: .04em;
-    }
-    .pwd-btn-cancel {
-      background: rgba(255,255,255,.08); color: rgba(240,208,128,.7);
-      border: 1.5px solid rgba(212,168,67,.2);
-    }
-    .pwd-btn-cancel:hover { background: rgba(255,255,255,.14); }
-    .pwd-btn-confirm {
-      background: linear-gradient(135deg, #1b5e20, #2e7d32);
-      color: #e8f5e9;
-      box-shadow: 0 4px 14px rgba(46,125,50,.4);
-    }
-    .pwd-btn-confirm:hover { background: linear-gradient(135deg, #2e7d32, #388e3c); transform: translateY(-1px); }
-    .pwd-hint {
-      margin-top: 14px; font-size: .74rem; color: rgba(240,208,128,.4);
-      border-top: 1px solid rgba(212,168,67,.1); padding-top: 12px;
-    }
+    .skel-line { height: 14px; background: #e8d5a0; border-radius: 4px; margin-bottom: 8px; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
     /* ── FOOTER ── */
     footer {
@@ -624,9 +610,9 @@
   <div class="panel active" id="tab-bac">
     <div class="chip-row" id="monthNavBac"></div>
     <div class="date-nav">
-      <button class="nav-btn" id="bacPrev">◀ Ngày trước</button>
+      <button class="nav-btn arrow" id="bacPrev" title="Ngày trước">◀</button>
       <div class="date-display" id="bacDisplay">—</div>
-      <button class="nav-btn" id="bacNext">Ngày sau ▶</button>
+      <button class="nav-btn arrow" id="bacNext" title="Ngày sau">▶</button>
       <input type="date" id="bacPicker" min="2026-01-01" max="2026-12-31"/>
       <button class="nav-btn" id="bacToday">Hôm nay</button>
     </div>
@@ -639,9 +625,9 @@
   <div class="panel" id="tab-cauhoi">
     <div class="chip-row" id="monthNavQA"></div>
     <div class="date-nav">
-      <button class="nav-btn" id="qaPrev">◀ Hôm trước</button>
+      <button class="nav-btn arrow" id="qaPrev" title="Hôm trước">◀</button>
       <div class="date-display" id="qaDisplay">—</div>
-      <button class="nav-btn" id="qaNext">Hôm sau ▶</button>
+      <button class="nav-btn arrow" id="qaNext" title="Hôm sau">▶</button>
       <input type="date" id="qaPicker" min="2026-01-01" max="2026-06-30"/>
       <button class="nav-btn" id="qaToday">Hôm nay</button>
     </div>
@@ -654,9 +640,9 @@
   <div class="panel" id="tab-luat">
     <div class="chip-row" id="weekChips"></div>
     <div class="date-nav">
-      <button class="nav-btn blue" id="luatPrev">◀ Tuần trước</button>
+      <button class="nav-btn arrow blue" id="luatPrev" title="Tuần trước">◀</button>
       <div class="date-display blue" id="luatDisplay">—</div>
-      <button class="nav-btn blue" id="luatNext">Tuần sau ▶</button>
+      <button class="nav-btn arrow blue" id="luatNext" title="Tuần sau">▶</button>
       <button class="nav-btn blue" id="luatNow">Tuần này</button>
     </div>
     <div class="card" id="luatCard">
@@ -703,14 +689,9 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
 
   <!-- ══════ TAB 5: TIN THẾ GIỚI ══════ -->
   <div class="panel" id="tab-thegioi">
-    <div class="news-header-bar">
-      <div class="news-status">
-        <div class="news-status-dot loading" id="dotTheGioi"></div>
-        <span class="news-time" id="timeTheGioi">⏳ Đang tải tin…</span>
-      </div>
-      <button class="news-btn-ai" onclick="openPwdModal('thegioi')">
-        <span class="btn-icon">🤖</span> AI Tóm Tắt
-      </button>
+    <div class="news-refresh">
+      <span class="news-time" id="timeTheGioi">⏳ Đang tải tin…</span>
+      <button class="news-reload" onclick="reloadNews('thegioi')">🔄 Làm mới / AI tóm tắt</button>
     </div>
     <div class="news-list" id="listTheGioi">
       <div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>
@@ -721,14 +702,9 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
 
   <!-- ══════ TAB 6: TIN TRONG NƯỚC ══════ -->
   <div class="panel" id="tab-trongnuoc">
-    <div class="news-header-bar">
-      <div class="news-status">
-        <div class="news-status-dot loading" id="dotTrongNuoc"></div>
-        <span class="news-time" id="timeTrongNuoc">⏳ Đang tải tin…</span>
-      </div>
-      <button class="news-btn-ai" onclick="openPwdModal('trongnuoc')">
-        <span class="btn-icon">🤖</span> AI Tóm Tắt
-      </button>
+    <div class="news-refresh">
+      <span class="news-time" id="timeTrongNuoc">⏳ Đang tải tin…</span>
+      <button class="news-reload" onclick="reloadNews('trongnuoc')">🔄 Làm mới / AI tóm tắt</button>
     </div>
     <div class="news-list" id="listTrongNuoc">
       <div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>
@@ -738,26 +714,6 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
   </div>
 
 </main>
-
-<!-- ══ PASSWORD MODAL ══ -->
-<div class="pwd-overlay" id="pwdOverlay" onclick="closePwdModal(event)">
-  <div class="pwd-modal">
-    <div class="pwd-modal-icon">🤖</div>
-    <div class="pwd-modal-title">AI Tóm Tắt Tin Tức</div>
-    <div class="pwd-modal-desc">Nhập mật khẩu để AI đọc và tóm tắt<br>2 tin mới nhất (4-5 câu mỗi tin)</div>
-    <div class="pwd-input-wrap">
-      <input class="pwd-input" type="password" id="pwdInput" placeholder="••••••••"
-        maxlength="20" onkeydown="if(event.key==='Enter')confirmPwd()" autocomplete="off">
-      <button class="pwd-toggle" onclick="togglePwdVis()" tabindex="-1" id="pwdToggle">👁</button>
-    </div>
-    <div class="pwd-error" id="pwdError"></div>
-    <div class="pwd-btns">
-      <button class="pwd-btn pwd-btn-cancel" onclick="closePwdModal()">Huỷ</button>
-      <button class="pwd-btn pwd-btn-confirm" onclick="confirmPwd()">✨ Xác nhận</button>
-    </div>
-    <div class="pwd-hint">Để trống → Chỉ làm mới tin, không tốn token</div>
-  </div>
-</div>
 
 <footer>
   ★ Bảng Tin Trung đoàn 1 — Sư đoàn 324 &mdash; Dữ liệu 2026 ★
@@ -1032,28 +988,26 @@ function switchView(mode) {
 }
 
 /* ════════════════════════════════════════════
-   TABS 5 & 6 — NEWS
+   TABS 5 & 6 — NEWS (KHÔNG AUTO-CALL AI)
 ════════════════════════════════════════════ */
 const NEWS_CACHE = {};
-const NEWS_PWD = '324';  // ← đổi mật khẩu tại đây
-let _pwdTargetType = null;
+const NEWS_PWD   = '324'; // ← đổi mật khẩu tại đây
 
-/* ── Helpers ── */
 function fmtPubDate(str) {
   if (!str) return '';
   try {
     const d = new Date(str);
     return d.toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-  } catch { return str.slice(0,16); }
-}
-function setDot(type, state) {
-  const id = type === 'thegioi' ? 'dotTheGioi' : 'dotTrongNuoc';
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.className = 'news-status-dot' + (state === 'ok' ? '' : state === 'loading' ? ' loading' : ' error');
+  } catch(e) { return str.slice(0,16); }
 }
 
-/* ── Render ── */
+function copyLink(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    const el = document.getElementById('copyMsg');
+    if (el) { el.style.display='inline'; setTimeout(() => el.style.display='none', 1500); }
+  }).catch(() => { prompt('Copy link này:', url); });
+}
+
 function renderNews(type, items) {
   const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
   const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
@@ -1062,113 +1016,179 @@ function renderNews(type, items) {
     : '<span class="news-badge badge-nation">🇻🇳 Trong nước</span>';
 
   const hasAI = items && items.some(it => it.summary);
-  const now   = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
+  const now = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
   document.getElementById(timeId).textContent =
-    (hasAI ? '🤖 AI tóm tắt — ' : '✅ Cập nhật ') + now;
-  setDot(type, 'ok');
+    (hasAI ? '🤖 AI tóm tắt — ' : '✅ ') + 'Cập nhật ' + now;
 
   const list = document.getElementById(listId);
   if (!items || items.length === 0) {
-    list.innerHTML = `<div class="no-data"><div class="nd-icon">📡</div><p>Không tải được tin tức.</p></div>`;
+    list.innerHTML = '<div class="no-data"><div class="nd-icon">📡</div><p>Không tải được tin.</p></div>';
     return;
   }
-
-  list.innerHTML = items.map((item, idx) => `
+  list.innerHTML = items.map(item => `
     <div class="news-item">
       <div class="news-item-hd">
         <div class="news-meta">
-          <div class="news-num">${idx + 1}</div>
           ${badge}
           ${item.summary ? '<span class="news-badge badge-ai">🤖 AI</span>' : ''}
           <span class="news-pub">${fmtPubDate(item.pubDate)}</span>
         </div>
         <a class="news-title" href="${item.link}" target="_blank" rel="noopener">${item.title}</a>
       </div>
-      <div class="news-divider"></div>
-      ${item.summary ? `
-        <div class="news-summary-block">
-          <div class="news-summary-lbl">🤖 AI Tóm tắt</div>
-          <div class="news-summary-txt">${item.summary}</div>
-        </div>` : `
-        <div class="news-excerpt">${item.excerpt || '(Không có mô tả.)'}</div>`}
-      <div class="news-readmore">
-        <a href="${item.link}" target="_blank" rel="noopener">🔗 Xem bài gốc trên VNExpress →</a>
+      ${item.summary
+        ? `<div class="news-summary-block">
+             <div class="news-summary-lbl">🤖 Tóm tắt nội dung</div>
+             <div class="news-summary-txt">${item.summary}</div>
+           </div>`
+        : `<div class="news-excerpt">${item.excerpt || '(Không có mô tả.)'}</div>`
+      }
+      <div class="news-readmore" style="padding:8px 18px 14px;display:flex;gap:10px;align-items:center;border-top:1px solid #e8d5a0">
+        <a href="${item.link}" target="_blank" rel="noopener"
+           style="font-size:.8rem;font-weight:700;color:var(--blue);text-decoration:none;border:1px solid #aed6f1;border-radius:20px;padding:3px 12px">
+          🔗 Xem đầy đủ
+        </a>
+        <button onclick="copyLink('${item.link}')"
+          style="font-size:.8rem;font-weight:700;background:#fff8e1;color:var(--text);border:1px solid var(--border);border-radius:20px;padding:3px 12px;cursor:pointer">
+          📋 Copy link
+        </button>
       </div>
     </div>`).join('');
 }
 
-/* ── Load ── */
-async function loadNews(type, force = false, withAI = false) {
-  if (!force && NEWS_CACHE[type] && !withAI) {
-    renderNews(type, NEWS_CACHE[type]);
-    return;
-  }
+/* ── Load news (KHÔNG gọi AI tự động) ── */
+async function loadNews(type, withAI) {
   const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
   const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
 
-  setDot(type, 'loading');
-  document.getElementById(timeId).textContent = withAI ? '🤖 AI đang đọc và tóm tắt…' : '⏳ Đang tải tin…';
-  document.getElementById(listId).innerHTML = Array(withAI ? 2 : 3).fill(0).map(() =>
-    `<div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>`
+  // Nếu không dùng AI và đã cache → hiển thị luôn
+  if (!withAI && NEWS_CACHE[type]) { renderNews(type, NEWS_CACHE[type]); return; }
+
+  document.getElementById(timeId).textContent = withAI ? '🤖 AI đang đọc…' : '⏳ Đang tải tin…';
+  document.getElementById(listId).innerHTML = [0,1].map(() =>
+    '<div class="news-skeleton"><div class="skel-line" style="width:80%"></div>' +
+    '<div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>'
   ).join('');
 
   try {
-    const res  = await fetch(`/api/news?type=${type}${withAI ? '&ai=1' : ''}`);
+    const url = '/api/news?type=' + type + (withAI ? '&ai=1' : '');
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     if (!withAI) NEWS_CACHE[type] = data.items;
     renderNews(type, data.items);
-  } catch (e) {
-    setDot(type, 'error');
+  } catch(e) {
+    console.warn('News failed:', e.message);
     document.getElementById(timeId).textContent = '⚠️ Lỗi tải tin';
     document.getElementById(listId).innerHTML =
-      `<div class="no-data"><div class="nd-icon">📡</div><p>Chưa kết nối được API.<br><small style="color:#999">Cần deploy lên Vercel.</small></p></div>`;
+      '<div class="no-data"><div class="nd-icon">📡</div>' +
+      '<p>Không tải được tin.<br><small style="color:#999">Cần deploy lên Vercel.</small></p></div>';
   }
 }
 
-/* ── Password Modal ── */
-function openPwdModal(type) {
-  _pwdTargetType = type;
-  document.getElementById('pwdInput').value = '';
-  document.getElementById('pwdError').textContent = '';
-  document.getElementById('pwdInput').type = 'password';
-  document.getElementById('pwdToggle').textContent = '👁';
-  document.getElementById('pwdOverlay').classList.add('show');
-  setTimeout(() => document.getElementById('pwdInput').focus(), 200);
-}
-function closePwdModal(e) {
-  if (e && e.target !== document.getElementById('pwdOverlay')) return;
-  document.getElementById('pwdOverlay').classList.remove('show');
-}
-function togglePwdVis() {
-  const inp = document.getElementById('pwdInput');
-  const btn = document.getElementById('pwdToggle');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
-}
-function confirmPwd() {
-  const val  = document.getElementById('pwdInput').value;
-  const type = _pwdTargetType;
-  document.getElementById('pwdOverlay').classList.remove('show');
-  if (val === NEWS_PWD) {
-    loadNews(type, true, true);   // AI tóm tắt
-  } else if (val === '') {
-    loadNews(type, true, false);  // chỉ làm mới
-  } else {
-    document.getElementById('pwdError').textContent = '❌ Sai mật khẩu';
-    document.getElementById('pwdOverlay').classList.add('show');
-    document.getElementById('pwdInput').focus();
-  }
-}
-
-// Load news khi chuyển tab
+/* ── Tab switch: load tin KHÔNG dùng AI ── */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const tab = btn.dataset.tab;
-    if (tab === 'tab-thegioi')   loadNews('thegioi');
-    if (tab === 'tab-trongnuoc') loadNews('trongnuoc');
+    if (tab === 'tab-thegioi')   loadNews('thegioi',   false);
+    if (tab === 'tab-trongnuoc') loadNews('trongnuoc', false);
   });
 });
+
+/* ── Password modal cho nút Làm mới / AI ── */
+let _pendingNewsType = null;
+
+function reloadNews(type) {
+  _pendingNewsType = type;
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('pwdErr').style.display = 'none';
+  document.getElementById('pwdModalBg').classList.add('open');
+  setTimeout(() => document.getElementById('pwdInput').focus(), 100);
+}
+
+document.getElementById('pwdCancel').addEventListener('click', () => {
+  document.getElementById('pwdModalBg').classList.remove('open');
+});
+document.getElementById('pwdOk').addEventListener('click', () => {
+  const val = document.getElementById('pwdInput').value.trim();
+  const errEl = document.getElementById('pwdErr');
+  errEl.style.display = 'none';
+  if (val === NEWS_PWD) {
+    document.getElementById('pwdModalBg').classList.remove('open');
+    loadNews(_pendingNewsType, true); // CÓ AI
+  } else if (val === '') {
+    document.getElementById('pwdModalBg').classList.remove('open');
+    NEWS_CACHE[_pendingNewsType] = null; // xóa cache
+    loadNews(_pendingNewsType, false); // KHÔNG AI
+  } else {
+    errEl.style.display = 'block';
+  }
+});
+document.getElementById('pwdInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('pwdOk').click();
+});
+// Đóng modal khi click nền
+document.getElementById('pwdModalBg').addEventListener('click', e => {
+  if (e.target === document.getElementById('pwdModalBg'))
+    document.getElementById('pwdModalBg').classList.remove('open');
+});
+
+/* ════════════════════════════════════════════
+   AI CHAT BUBBLE — tóm tắt bài từ link
+════════════════════════════════════════════ */
+const aiBubble  = document.getElementById('aiBubble');
+const aiModalBg = document.getElementById('aiModalBg');
+const aiCloseBtn= document.getElementById('aiCloseBtn');
+const aiUrlInput= document.getElementById('aiUrlInput');
+const aiSubmit  = document.getElementById('aiSubmitBtn');
+const aiLoading = document.getElementById('aiLoading');
+const aiResult  = document.getElementById('aiResult');
+
+aiBubble.addEventListener('click', () => {
+  aiModalBg.classList.add('open');
+  aiUrlInput.value = ''; aiResult.classList.remove('show'); aiLoading.classList.remove('show');
+  setTimeout(() => aiUrlInput.focus(), 150);
+});
+aiCloseBtn.addEventListener('click', () => aiModalBg.classList.remove('open'));
+aiModalBg.addEventListener('click', e => { if (e.target === aiModalBg) aiModalBg.classList.remove('open'); });
+
+async function doSummarize() {
+  const url = aiUrlInput.value.trim();
+  if (!url || !url.startsWith('http')) {
+    aiUrlInput.focus(); return;
+  }
+  aiLoading.classList.add('show');
+  aiResult.classList.remove('show');
+  aiSubmit.disabled = true;
+
+  try {
+    const res  = await fetch('/api/summarize?url=' + encodeURIComponent(url));
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    document.getElementById('aiResultTitle').textContent = data.title || '';
+    document.getElementById('aiResultText').textContent  = data.summary || '(Không có kết quả)';
+    aiResult.classList.remove('ai-error');
+    aiResult.classList.add('show');
+  } catch(e) {
+    document.getElementById('aiResultTitle').textContent = '';
+    document.getElementById('aiResultText').textContent  = '⚠️ ' + e.message;
+    aiResult.classList.add('ai-error', 'show');
+  } finally {
+    aiLoading.classList.remove('show');
+    aiSubmit.disabled = false;
+  }
+}
+
+aiSubmit.addEventListener('click', doSummarize);
+aiUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSummarize(); });
+
+// Paste từ clipboard vào ô URL
+aiUrlInput.addEventListener('paste', () => {
+  setTimeout(() => { if (aiUrlInput.value.startsWith('http')) doSummarize(); }, 100);
+});
+
+
+
 
 document.addEventListener('keydown', e => {
   const active = document.querySelector('.tab-btn.active')?.dataset.tab;
@@ -1221,5 +1241,48 @@ Promise.all([
   document.getElementById('luatCard').innerHTML = msg;
 });
 </script>
+<!-- ══ AI CHAT BUBBLE ══ -->
+<button class="ai-bubble" id="aiBubble" title="AI đọc & tóm tắt bài báo">
+  🤖
+  <span class="ai-bubble-label">Dán link → AI tóm tắt</span>
+</button>
+
+<!-- ══ AI SUMMARIZE MODAL ══ -->
+<div class="ai-modal-bg" id="aiModalBg">
+  <div class="ai-modal">
+    <div class="ai-modal-hd">
+      <span class="ai-modal-title">🤖 AI Đọc & Tóm Tắt Bài Báo</span>
+      <button class="ai-close-btn" id="aiCloseBtn">✕</button>
+    </div>
+    <div class="ai-modal-sub">Dán link bài báo bất kỳ → AI tự truy cập và tóm tắt 4–5 dòng</div>
+    <div class="ai-url-row">
+      <input class="ai-url-input" id="aiUrlInput" type="url"
+        placeholder="https://vnexpress.net/..." autocomplete="off"/>
+      <button class="ai-submit-btn" id="aiSubmitBtn">Tóm tắt</button>
+    </div>
+    <div class="ai-loading" id="aiLoading">⏳ AI đang đọc bài…</div>
+    <div class="ai-result" id="aiResult">
+      <div class="ai-result-title">🤖 Tóm tắt nội dung</div>
+      <div id="aiResultTitle" style="font-weight:700;margin-bottom:8px;color:var(--red-dk)"></div>
+      <div id="aiResultText"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PASSWORD MODAL ══ -->
+<div class="pwd-modal-bg" id="pwdModalBg">
+  <div class="pwd-modal">
+    <h3>🔐 Xác nhận dùng AI</h3>
+    <p>Nhập mật khẩu để AI đọc và tóm tắt tin.<br>Bỏ trống → chỉ làm mới không dùng AI.</p>
+    <input class="pwd-input" id="pwdInput" type="password"
+      placeholder="Mật khẩu…" autocomplete="off" maxlength="20"/>
+    <div class="pwd-btns">
+      <button class="pwd-cancel" id="pwdCancel">Huỷ</button>
+      <button class="pwd-ok" id="pwdOk">Xác nhận</button>
+    </div>
+    <div class="pwd-err" id="pwdErr">❌ Sai mật khẩu!</div>
+  </div>
+</div>
+
 </body>
 </html>

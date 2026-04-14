@@ -752,7 +752,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 ════════════════════════════════════════════ */
 function todayKey() {
   const n = new Date();
-  return `2026-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
+  return `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
 }
 function formatDate(key) {
   if (!key) return '—';
@@ -912,9 +912,10 @@ function adjWeek(key, dir) {
 }
 function currentWeekKey() {
   const n = new Date();
-  const d = new Date(2026, n.getMonth(), n.getDate());
+  const yr = n.getFullYear();
+  const d = new Date(yr, n.getMonth(), n.getDate());
   // Tính tuần theo thứ Hai: tuần 1 bắt đầu từ thứ Hai đầu tiên của tháng
-  const firstDay = new Date(2026, d.getMonth(), 1);
+  const firstDay = new Date(yr, d.getMonth(), 1);
   const firstDayDow = (firstDay.getDay() + 6) % 7; // Mon=0 ... Sun=6
   const weekNum = Math.ceil((d.getDate() + firstDayDow) / 7);
   const key = `2026-${pad(d.getMonth()+1)}-W${weekNum}`;
@@ -1079,10 +1080,11 @@ async function loadNews(type, withAI) {
     renderNews(type, data.items);
   } catch(e) {
     console.warn('News failed:', e.message);
-    document.getElementById(timeId).textContent = '⚠️ Lỗi tải tin';
+    document.getElementById(timeId).textContent = '⚠️ Không khả dụng trên GitHub Pages';
     document.getElementById(listId).innerHTML =
       '<div class="no-data"><div class="nd-icon">📡</div>' +
-      '<p>Không tải được tin.<br><small style="color:#999">Cần deploy lên Vercel.</small></p></div>';
+      '<p>Tính năng đọc tin tức cần backend (Vercel).<br>' +
+      '<small style="color:#999">GitHub Pages chỉ hỗ trợ nội dung tĩnh — không chạy được API.</small></p></div>';
   }
 }
 
@@ -1163,6 +1165,7 @@ async function doSummarize() {
 
   try {
     const res  = await fetch('/api/summarize?url=' + encodeURIComponent(url));
+    if (!res.ok) throw new Error('API không khả dụng trên GitHub Pages (cần deploy Vercel)');
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     document.getElementById('aiResultTitle').textContent = data.title || '';

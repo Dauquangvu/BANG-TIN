@@ -1,21 +1,47 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
-  const { url } = req.body;
-  const r = await fetch('https://api-d-anthropic-d-com-s-cld.v.tuangouai.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-beta': 'web-search-2025-03-05'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514', max_tokens: 1000,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: 'Tóm tắt bài báo này 4-5 câu tiếng Việt:\n' + url }]
-    })
-  });
-  const d = await r.json();
-  const summary = (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
-  res.json({ summary });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Only POST allowed" });
+  }
+
+  try {
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: "Missing URL" });
+    }
+
+    const response = await fetch(`${process.env.BASE_URL}/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.CLAUDE_API_KEY,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-3-haiku-20240307",
+        max_tokens: 500,
+        messages: [
+          {
+            role: "user",
+            content: `Hãy truy cập link sau và tóm tắt thành 4-5 câu tiếng Việt:\n${url}`
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(500).json({ error: errText });
+    }
+
+    const data = await response.json();
+
+    const summary =
+      data?.content?.[0]?.text || "Không có kết quả";
+
+    res.status(200).json({ summary });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }

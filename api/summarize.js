@@ -9,19 +9,40 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing URL" });
     }
 
-    // 1. LẤY HTML BÀI BÁO
-    const htmlRes = await fetch(url);
+    // ===== 1. FETCH HTML =====
+    const htmlRes = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0"
+      }
+    });
     const html = await htmlRes.text();
 
-    // 2. TRÍCH TEXT (cách đơn giản cho VnExpress)
-    const content = html
+    // ===== 2. TRÍCH NỘI DUNG CHUẨN =====
+    let content = "";
+
+    // 🎯 Ưu tiên VnExpress
+    const vnexpressMatch = html.match(
+      /<article class="fck_detail[^>]*>([\s\S]*?)<\/article>/
+    );
+
+    if (vnexpressMatch) {
+      content = vnexpressMatch[1];
+    } else {
+      // fallback: lấy body
+      const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/);
+      content = bodyMatch ? bodyMatch[1] : html;
+    }
+
+    // ===== 3. CLEAN HTML → TEXT =====
+    content = content
       .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "")
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
-      .slice(0, 5000); // giới hạn để tiết kiệm token
+      .trim()
+      .slice(0, 6000); // giới hạn token
 
-    // 3. GỬI CHO CLAUDE
+    // ===== 4. GỌI CLAUDE =====
     const response = await fetch(`${process.env.AI_BASE_URL}/messages`, {
       method: "POST",
       headers: {
@@ -31,11 +52,21 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: process.env.AI_MODEL,
-        max_tokens: 500,
+        max_tokens: 400,
         messages: [
           {
             role: "user",
-            content: `Tóm tắt nội dung sau thành 4-5 câu tiếng Việt:\n\n${content}`
+            content: `
+Bạn là trợ lý tóm tắt tin tức.
+
+Hãy:
+- Tóm tắt thành 4–5 câu NGẮN GỌN
+- Giữ ý chính, bỏ chi tiết phụ
+- Viết tiếng Việt rõ ràng
+
+Nội dung:
+${content}
+`
           }
         ]
       })

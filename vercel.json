@@ -1,12 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "",
-  "outputDirectory": ".",
-  "functions": {
-    "api/news.js": {
-      "runtime": "edge"
-    }
-  },
   "headers": [
     {
       "source": "/api/(.*)",

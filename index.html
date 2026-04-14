@@ -437,22 +437,13 @@
     }
     .news-title:hover { color: var(--blue); text-decoration: underline; }
     .news-excerpt {
-      padding: 10px 18px 12px; font-size: .9rem; color: #3a2a10; line-height: 1.7;
-    }
-    .news-readmore {
-      padding: 0 18px 14px;
+      padding: 10px 18px; font-size: .9rem; color: #3a2a10; line-height: 1.7;
       border-bottom: 1px solid #e8d5a0;
     }
-    .news-readmore a {
-      font-size: .8rem; font-weight: 700; color: var(--blue);
-      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
-      border: 1px solid #aed6f1; border-radius: 20px; padding: 3px 12px;
-      transition: background .2s;
-    }
-    .news-readmore a:hover { background: #e3f0ff; }
-    .news-summary-block { padding: 10px 18px 14px; }
-    .news-summary-lbl { font-size: .68rem; font-weight: 700; letter-spacing:.1em; color:#1b5e20; text-transform:uppercase; margin-bottom:5px; }
-    .news-summary-txt { font-size: .9rem; color: #1a3300; line-height: 1.7; font-style: italic; }
+    .news-summary-block { padding: 14px 18px 16px; background: #f1f8e9; border-top: 2px solid #c8e6c9; }
+    .news-summary-lbl { font-size: .72rem; font-weight: 700; letter-spacing:.1em; color:#1b5e20; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+    .news-summary-lbl::after { content:''; flex:1; height:1px; background:#a5d6a7; }
+    .news-summary-txt { font-size: .93rem; color: #1a3300; line-height: 1.82; }
     .news-skeleton {
       background: var(--cream); border-radius: 12px; border: 2px solid var(--border);
       padding: 20px; animation: pulse 1.4s infinite;
@@ -599,7 +590,7 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
   <div class="panel" id="tab-thegioi">
     <div class="news-refresh">
       <span class="news-time" id="timeTheGioi">⏳ Đang tải tin…</span>
-      <button class="news-reload" onclick="loadNews('thegioi', true)">🔄 Làm mới</button>
+      <button class="news-reload" onclick="reloadNews('thegioi')">🔄 Làm mới / AI tóm tắt</button>
     </div>
     <div class="news-list" id="listTheGioi">
       <div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>
@@ -612,7 +603,7 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
   <div class="panel" id="tab-trongnuoc">
     <div class="news-refresh">
       <span class="news-time" id="timeTrongNuoc">⏳ Đang tải tin…</span>
-      <button class="news-reload" onclick="loadNews('trongnuoc', true)">🔄 Làm mới</button>
+      <button class="news-reload" onclick="reloadNews('trongnuoc')">🔄 Làm mới / AI tóm tắt</button>
     </div>
     <div class="news-list" id="listTrongNuoc">
       <div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>
@@ -821,7 +812,11 @@ function adjWeek(key, dir) {
 function currentWeekKey() {
   const n = new Date();
   const d = new Date(2026, n.getMonth(), n.getDate());
-  const key = `2026-${pad(d.getMonth()+1)}-W${Math.ceil(d.getDate()/7)}`;
+  // Tính tuần theo thứ Hai: tuần 1 bắt đầu từ thứ Hai đầu tiên của tháng
+  const firstDay = new Date(2026, d.getMonth(), 1);
+  const firstDayDow = (firstDay.getDay() + 6) % 7; // Mon=0 ... Sun=6
+  const weekNum = Math.ceil((d.getDate() + firstDayDow) / 7);
+  const key = `2026-${pad(d.getMonth()+1)}-W${weekNum}`;
   return DATA_WEEKS[key] ? key : allWeeks()[0];
 }
 function renderLuat(key) {
@@ -911,12 +906,14 @@ function renderNews(type, items) {
     ? '<span class="news-badge badge-world">🌍 Thế giới</span>'
     : '<span class="news-badge badge-nation">🇻🇳 Trong nước</span>';
 
+  const hasAI = items && items.some(it => it.summary);
   const now = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'});
-  document.getElementById(timeId).textContent = `✅ Cập nhật lúc ${now}`;
+  document.getElementById(timeId).textContent =
+    (hasAI ? '🤖 AI đã tóm tắt — ' : '✅ ') + 'Cập nhật lúc ' + now;
 
   const list = document.getElementById(listId);
   if (!items || items.length === 0) {
-    list.innerHTML = `<div class="no-data"><div class="nd-icon">📡</div><p>Không tải được tin tức.<br>Kiểm tra kết nối hoặc thử lại sau.</p></div>`;
+    list.innerHTML = `<div class="no-data"><div class="nd-icon">📡</div><p>Không tải được tin tức.</p></div>`;
     return;
   }
 
@@ -930,42 +927,61 @@ function renderNews(type, items) {
         </div>
         <a class="news-title" href="${item.link}" target="_blank" rel="noopener">${item.title}</a>
       </div>
-      <div class="news-excerpt">${item.excerpt || '(Không có đoạn mô tả.)'}</div>
-      <div class="news-readmore">
-        <a href="${item.link}" target="_blank" rel="noopener">🔗 Xem thêm tại VNExpress ›</a>
-      </div>
       ${item.summary ? `
       <div class="news-summary-block">
-        <div class="news-summary-lbl">🤖 AI tóm tắt</div>
+        <div class="news-summary-lbl">🤖 Tóm tắt nội dung</div>
         <div class="news-summary-txt">${item.summary}</div>
-      </div>` : ''}
+      </div>
+      <div class="news-readmore">
+        <a href="${item.link}" target="_blank" rel="noopener">🔗 Xem bài đầy đủ tại VNExpress ›</a>
+      </div>` : `
+      <div class="news-excerpt">${item.excerpt || '(Không có mô tả.)'}</div>
+      <div class="news-readmore">
+        <a href="${item.link}" target="_blank" rel="noopener">🔗 Xem thêm tại VNExpress ›</a>
+      </div>`}
     </div>`).join('');
 }
 
-async function loadNews(type, force = false) {
-  if (!force && NEWS_CACHE[type]) {
+const NEWS_PWD = '324';  // ← đổi mật khẩu tại đây
+
+async function loadNews(type, force = false, withAI = false) {
+  if (!force && NEWS_CACHE[type] && !withAI) {
     renderNews(type, NEWS_CACHE[type]);
     return;
   }
 
   const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
   const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
+  const skeleCount = withAI ? 2 : 3;
 
-  document.getElementById(timeId).textContent = '⏳ Đang tải tin…';
-  document.getElementById(listId).innerHTML = [1,2,3].map(() =>
+  document.getElementById(timeId).textContent = withAI ? '🤖 AI đang đọc và tóm tắt…' : '⏳ Đang tải tin…';
+  document.getElementById(listId).innerHTML = Array(skeleCount).fill(0).map(() =>
     `<div class="news-skeleton"><div class="skel-line" style="width:80%"></div><div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>`
   ).join('');
 
   try {
-    const res  = await fetch(`/api/news?type=${type}`);
+    const url = `/api/news?type=${type}${withAI ? '&ai=1' : ''}`;
+    const res  = await fetch(url);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    NEWS_CACHE[type] = data.items;
+    if (!withAI) NEWS_CACHE[type] = data.items;
     renderNews(type, data.items);
   } catch (e) {
     console.warn('News load failed:', e.message);
     document.getElementById(timeId).textContent = '⚠️ Không tải được tin';
-    document.getElementById(listId).innerHTML = `<div class="no-data"><div class="nd-icon">📡</div><p>Chưa kết nối được API tin tức.<br><small style="color:#999">Cần deploy lên Vercel để sử dụng tính năng này.</small></p></div>`;
+    document.getElementById(listId).innerHTML = `<div class="no-data"><div class="nd-icon">📡</div><p>Chưa kết nối được API.<br><small style="color:#999">Cần deploy lên Vercel.</small></p></div>`;
+  }
+}
+
+function reloadNews(type) {
+  const pwd = prompt('🔐 Nhập mật khẩu để AI đọc và tóm tắt tin:');
+  if (pwd === null) return; // bấm Cancel
+  if (pwd === NEWS_PWD) {
+    loadNews(type, true, true); // có AI
+  } else if (pwd === '') {
+    loadNews(type, true, false); // chỉ làm mới, không AI
+  } else {
+    alert('❌ Sai mật khẩu! Nhập trống để làm mới không dùng AI.');
   }
 }
 

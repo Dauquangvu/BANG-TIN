@@ -1,4 +1,4 @@
-// api/news.js
+// api/news.js — VNExpress RSS + AI summarize
 const RSS = {
   thegioi:   'https://vnexpress.net/rss/the-gioi.rss',
   trongnuoc: 'https://vnexpress.net/rss/thoi-su.rss'
@@ -6,10 +6,18 @@ const RSS = {
 
 function strip(html) {
   return (html || '')
+    .replace(/<!\[CDATA\[/g, '').replace(/\]\]>/g, '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
     .replace(/\s+/g, ' ').trim();
+}
+
+function getTag(block, tag) {
+  // Handles CDATA and non-CDATA
+  var r = new RegExp('<' + tag + '[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + tag + '>', 'i');
+  var f = r.exec(block);
+  return f ? f[1].trim() : '';
 }
 
 function parseRSS(xml) {
@@ -18,88 +26,54 @@ function parseRSS(xml) {
   var m;
   while ((m = re.exec(xml)) !== null) {
     var b = m[1];
-    function get(tag) {
-      var r = new RegExp('<' + tag + '[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/' + tag + '>', 'i');
-      var f = r.exec(b);
-      return f ? f[1].trim() : '';
-    }
-    var title   = strip(get('title'));
-    var link    = get('link') || get('guid');
-    var desc    = strip(get('description'));
-    var pubDate = get('pubDate');
+    var title   = strip(getTag(b, 'title'));
+    var link    = (getTag(b, 'link') || getTag(b, 'guid')).trim();
+    // VNExpress RSS description thường có nội dung khá đầy đủ
+    var descRaw = getTag(b, 'description');
+    var desc    = strip(descRaw);
+    var pubDate = getTag(b, 'pubDate');
+
     if (title && link) {
-      items.push({ title: title, link: link.trim(), excerpt: desc.slice(0, 400), pubDate: pubDate });
+      items.push({
+        title:   title,
+        link:    link,
+        excerpt: desc.slice(0, 600),   // lấy tối đa 600 ký tự
+        pubDate: pubDate
+      });
     }
     if (items.length >= 3) break;
   }
   return items;
 }
 
-async function fetchArticleContent(url) {
-  try {
-    var r = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BangTin/1.0)', 'Accept': 'text/html' },
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!r.ok) return null;
-    var html = await r.text();
-
-    var paragraphs = [];
-
-    var sapoMatch = html.match(/class="description"[^>]*>([\s\S]*?)<\/p>/i);
-    if (sapoMatch) paragraphs.push(strip(sapoMatch[1]));
-
-    var articleMatch = html.match(/class="(?:fck_detail|article-body)[^"]*"[^>]*>([\s\S]{100,5000}?)(?=<div class="article-relate|<div class="tags|<footer)/i);
-    if (articleMatch) {
-      var pRe = /<p[^>]*>([\s\S]*?)<\/p>/g;
-      var pm, count = 0;
-      while ((pm = pRe.exec(articleMatch[1])) !== null && count < 6) {
-        var txt = strip(pm[1]);
-        if (txt.length > 40) { paragraphs.push(txt); count++; }
-      }
-    }
-
-    if (paragraphs.length === 0) {
-      var descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
-                   || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
-      if (descMatch) paragraphs.push(descMatch[1].trim());
-    }
-
-    return paragraphs.join(' ').slice(0, 1500) || null;
-  } catch (e) {
-    return null;
-  }
-}
-
 async function summarize(items) {
-  var key   = process.env.AI_API_KEY;
-  var base  = (process.env.AI_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, '');
-  var model = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
+  var key      = process.env.AI_API_KEY;
+  var base     = (process.env.AI_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, '');
+  var model    = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
   var endpoint = base + '/v1/messages';
 
   var prompt = items.map(function(it, i) {
-    var body = it.fullContent || it.excerpt || it.title;
-    return 'BÀI ' + (i + 1) + ': ' + it.title + '\nNỘI DUNG: ' + body;
+    return 'BÀI ' + (i + 1) + ':\nTiêu đề: ' + it.title + '\nNội dung: ' + it.excerpt;
   }).join('\n\n---\n\n');
 
   var reqBody = JSON.stringify({
-    model: model,
-    max_tokens: 800,
+    model:      model,
+    max_tokens: 1000,
     messages: [{
-      role: 'user',
-      content: 'Bạn là trợ lý tóm tắt tin tức quân sự. Hãy tóm tắt mỗi bài báo dưới đây thành 3-4 câu tiếng Việt rõ ràng, nêu đủ thông tin chính (ai, làm gì, ở đâu, kết quả). Trả về JSON array gồm ' + items.length + ' chuỗi. Chỉ JSON thuần, không markdown, không giải thích.\n\n' + prompt
+      role:    'user',
+      content: 'Bạn là biên tập viên tin tức. Dựa vào tiêu đề và nội dung mỗi bài báo dưới đây, hãy viết phần tóm tắt gồm 4-5 câu tiếng Việt, nêu rõ: sự kiện gì xảy ra, ai liên quan, ở đâu, diễn biến chính, kết quả/ý nghĩa. Viết tự nhiên như biên tập viên, không liệt kê.\n\nTrả về JSON array gồm ' + items.length + ' chuỗi. Chỉ JSON thuần không markdown không giải thích thêm.\n\n' + prompt
     }]
   });
 
   var r = await fetch(endpoint, {
-    method: 'POST',
+    method:  'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
+      'Content-Type':      'application/json',
+      'x-api-key':         key,
       'anthropic-version': '2023-06-01'
     },
-    body: reqBody,
-    signal: AbortSignal.timeout(25000)
+    body:   reqBody,
+    signal: AbortSignal.timeout(30000)
   });
 
   if (!r.ok) {
@@ -108,7 +82,12 @@ async function summarize(items) {
   }
   var d = await r.json();
   var t = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text : '[]';
-  return JSON.parse(t.replace(/```json|```/g, '').trim());
+  var clean = t.replace(/```json|```/g, '').trim();
+
+  // Safety: tìm array JSON trong response
+  var arrMatch = clean.match(/\[[\s\S]*\]/);
+  if (!arrMatch) throw new Error('AI response không phải JSON array');
+  return JSON.parse(arrMatch[0]);
 }
 
 module.exports = async function(req, res) {
@@ -124,32 +103,36 @@ module.exports = async function(req, res) {
   }
 
   try {
-    var rss = await fetch(RSS[type], {
-      headers: { 'User-Agent': 'BangTin/1.0' },
-      signal: AbortSignal.timeout(8000)
+    // 1. Fetch RSS
+    var rssRes = await fetch(RSS[type], {
+      headers: { 'User-Agent': 'Mozilla/5.0 BangTin/2.0' },
+      signal:  AbortSignal.timeout(8000)
     });
-    if (!rss.ok) throw new Error('RSS ' + rss.status);
-    var xml   = await rss.text();
+    if (!rssRes.ok) throw new Error('RSS ' + rssRes.status);
+    var xml   = await rssRes.text();
     var items = parseRSS(xml);
 
-    if (withAI && process.env.AI_API_KEY && items.length > 0) {
-      try {
-        var toSum = items.slice(0, 2);
-        var contents = await Promise.all(toSum.map(it => fetchArticleContent(it.link)));
-        toSum.forEach(function(it, i) { if (contents[i]) it.fullContent = contents[i]; });
+    if (items.length === 0) throw new Error('Không parse được tin từ RSS');
 
-        var sums = await summarize(toSum);
+    // 2. Nếu yêu cầu AI và có key → tóm tắt
+    if (withAI && process.env.AI_API_KEY) {
+      try {
+        var toSum = items.slice(0, 2);   // chỉ tóm tắt 2 tin đầu
+        var sums  = await summarize(toSum);
         toSum.forEach(function(it, i) {
-          it.summary = sums[i] || null;
-          delete it.fullContent;
+          if (sums[i] && typeof sums[i] === 'string') {
+            it.summary = sums[i];
+          }
         });
       } catch (e) {
-        console.warn('AI lỗi:', e.message);
-        // Trả về items bình thường, không crash
+        // AI lỗi → vẫn trả tin bình thường, không crash
+        console.error('AI error:', e.message);
+        items[0] && (items[0].aiError = e.message.slice(0, 100));
       }
     }
 
     return res.status(200).json({ items: items });
+
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }

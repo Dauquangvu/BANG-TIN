@@ -1,16 +1,13 @@
 {
   "version": 2,
   "functions": {
-    "api/news.js": {
-      "maxDuration": 60
-    }
+    "api/news.js":      { "maxDuration": 60 },
+    "api/summarize.js": { "maxDuration": 30 }
   },
   "headers": [
     {
       "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" }
-      ]
+      "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
     }
   ]
 }

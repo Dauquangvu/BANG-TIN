@@ -736,16 +736,9 @@ let curQA      = '';
 let curWeek    = '';
 
 /* ════════════════════════════════════════════
-   TABS
+   TABS — single unified listener (includes news load)
 ════════════════════════════════════════════ */
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
-  });
-});
+// (tab-btn listener defined below after NEWS functions)
 
 /* ════════════════════════════════════════════
    SHARED HELPERS
@@ -1086,9 +1079,13 @@ async function loadNews(type, withAI) {
   }
 }
 
-/* ── Tab switch: load tin KHÔNG dùng AI ── */
+/* ── Unified tab-btn listener ── */
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
     const tab = btn.dataset.tab;
     if (tab === 'tab-thegioi')   loadNews('thegioi',   false);
     if (tab === 'tab-trongnuoc') loadNews('trongnuoc', false);
@@ -1135,56 +1132,56 @@ document.getElementById('pwdModalBg').addEventListener('click', e => {
 
 /* ════════════════════════════════════════════
    AI CHAT BUBBLE — tóm tắt bài từ link
+   (elements rendered after </script>, so use window.onload)
 ════════════════════════════════════════════ */
-const aiBubble  = document.getElementById('aiBubble');
-const aiModalBg = document.getElementById('aiModalBg');
-const aiCloseBtn= document.getElementById('aiCloseBtn');
-const aiUrlInput= document.getElementById('aiUrlInput');
-const aiSubmit  = document.getElementById('aiSubmitBtn');
-const aiLoading = document.getElementById('aiLoading');
-const aiResult  = document.getElementById('aiResult');
+window.addEventListener('load', function() {
+  const aiBubble  = document.getElementById('aiBubble');
+  const aiModalBg = document.getElementById('aiModalBg');
+  const aiCloseBtn= document.getElementById('aiCloseBtn');
+  const aiUrlInput= document.getElementById('aiUrlInput');
+  const aiSubmit  = document.getElementById('aiSubmitBtn');
+  const aiLoading = document.getElementById('aiLoading');
+  const aiResult  = document.getElementById('aiResult');
 
-aiBubble.addEventListener('click', () => {
-  aiModalBg.classList.add('open');
-  aiUrlInput.value = ''; aiResult.classList.remove('show'); aiLoading.classList.remove('show');
-  setTimeout(() => aiUrlInput.focus(), 150);
-});
-aiCloseBtn.addEventListener('click', () => aiModalBg.classList.remove('open'));
-aiModalBg.addEventListener('click', e => { if (e.target === aiModalBg) aiModalBg.classList.remove('open'); });
+  if (!aiBubble) return; // safety
 
-async function doSummarize() {
-  const url = aiUrlInput.value.trim();
-  if (!url || !url.startsWith('http')) {
-    aiUrlInput.focus(); return;
+  aiBubble.addEventListener('click', () => {
+    aiModalBg.classList.add('open');
+    aiUrlInput.value = ''; aiResult.classList.remove('show'); aiLoading.classList.remove('show');
+    setTimeout(() => aiUrlInput.focus(), 150);
+  });
+  aiCloseBtn.addEventListener('click', () => aiModalBg.classList.remove('open'));
+  aiModalBg.addEventListener('click', e => { if (e.target === aiModalBg) aiModalBg.classList.remove('open'); });
+
+  async function doSummarize() {
+    const url = aiUrlInput.value.trim();
+    if (!url || !url.startsWith('http')) { aiUrlInput.focus(); return; }
+    aiLoading.classList.add('show');
+    aiResult.classList.remove('show');
+    aiSubmit.disabled = true;
+    try {
+      const res  = await fetch('/api/summarize?url=' + encodeURIComponent(url));
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      document.getElementById('aiResultTitle').textContent = data.title || '';
+      document.getElementById('aiResultText').textContent  = data.summary || '(Không có kết quả)';
+      aiResult.classList.remove('ai-error');
+      aiResult.classList.add('show');
+    } catch(e) {
+      document.getElementById('aiResultTitle').textContent = '';
+      document.getElementById('aiResultText').textContent  = '⚠️ ' + e.message;
+      aiResult.classList.add('ai-error', 'show');
+    } finally {
+      aiLoading.classList.remove('show');
+      aiSubmit.disabled = false;
+    }
   }
-  aiLoading.classList.add('show');
-  aiResult.classList.remove('show');
-  aiSubmit.disabled = true;
 
-  try {
-    const res  = await fetch('/api/summarize?url=' + encodeURIComponent(url));
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    document.getElementById('aiResultTitle').textContent = data.title || '';
-    document.getElementById('aiResultText').textContent  = data.summary || '(Không có kết quả)';
-    aiResult.classList.remove('ai-error');
-    aiResult.classList.add('show');
-  } catch(e) {
-    document.getElementById('aiResultTitle').textContent = '';
-    document.getElementById('aiResultText').textContent  = '⚠️ ' + e.message;
-    aiResult.classList.add('ai-error', 'show');
-  } finally {
-    aiLoading.classList.remove('show');
-    aiSubmit.disabled = false;
-  }
-}
-
-aiSubmit.addEventListener('click', doSummarize);
-aiUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSummarize(); });
-
-// Paste từ clipboard vào ô URL
-aiUrlInput.addEventListener('paste', () => {
-  setTimeout(() => { if (aiUrlInput.value.startsWith('http')) doSummarize(); }, 100);
+  aiSubmit.addEventListener('click', doSummarize);
+  aiUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSummarize(); });
+  aiUrlInput.addEventListener('paste', () => {
+    setTimeout(() => { if (aiUrlInput.value.startsWith('http')) doSummarize(); }, 100);
+  });
 });
 
 

@@ -729,6 +729,26 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
       <button class="ai-close-btn" id="aiCloseBtn">✕</button>
     </div>
     <div class="ai-modal-sub">Dán link bài báo bất kỳ → AI tự truy cập và tóm tắt 4–5 dòng</div>
+
+    <!-- API Key row -->
+    <div id="apiKeyRow" style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div style="flex:1;min-width:0;position:relative">
+        <input id="aiApiKeyInput" type="password" autocomplete="off"
+          placeholder="🔑 Nhập Anthropic API key (sk-ant-...)"
+          style="width:100%;padding:8px 36px 8px 12px;border:2px solid var(--border);border-radius:10px;
+                 font-size:.82rem;background:#fff8e8;outline:none;color:var(--text);"/>
+        <button id="toggleKeyVis" onclick="toggleKeyVisibility()"
+          style="position:absolute;right:8px;top:50%;transform:translateY(-50%);
+                 background:none;border:none;cursor:pointer;font-size:.9rem;padding:0;line-height:1">👁</button>
+      </div>
+      <button onclick="saveApiKey()"
+        style="background:var(--gold);color:var(--red-dk);border:none;border-radius:10px;
+               padding:8px 14px;font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap">
+        💾 Lưu key
+      </button>
+    </div>
+    <div id="apiKeyStatus" style="font-size:.75rem;margin-bottom:10px;display:none"></div>
+
     <div class="ai-url-row">
       <input class="ai-url-input" id="aiUrlInput" type="url"
         placeholder="https://vnexpress.net/..." autocomplete="off"/>
@@ -1224,26 +1244,65 @@ const aiResult  = document.getElementById('aiResult');
 aiBubble.addEventListener('click', () => {
   aiModalBg.classList.add('open');
   aiUrlInput.value = ''; aiResult.classList.remove('show'); aiLoading.classList.remove('show');
-  setTimeout(() => aiUrlInput.focus(), 150);
+  // Load saved key
+  const saved = localStorage.getItem('anthropic_api_key') || '';
+  document.getElementById('aiApiKeyInput').value = saved;
+  updateKeyStatus(saved);
+  setTimeout(() => (saved ? aiUrlInput : document.getElementById('aiApiKeyInput')).focus(), 150);
 });
 aiCloseBtn.addEventListener('click', () => aiModalBg.classList.remove('open'));
 aiModalBg.addEventListener('click', e => { if (e.target === aiModalBg) aiModalBg.classList.remove('open'); });
 
+/* ── API Key management ── */
+function toggleKeyVisibility() {
+  const inp = document.getElementById('aiApiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function updateKeyStatus(key) {
+  const el = document.getElementById('apiKeyStatus');
+  if (key && key.startsWith('sk-ant-')) {
+    el.style.display = 'block'; el.style.color = '#1b5e20';
+    el.textContent = '✅ Đã có API key — sẵn sàng tóm tắt';
+  } else if (key) {
+    el.style.display = 'block'; el.style.color = '#c62828';
+    el.textContent = '⚠️ Key không đúng định dạng (phải bắt đầu sk-ant-)';
+  } else {
+    el.style.display = 'block'; el.style.color = '#888';
+    el.textContent = '🔑 Chưa có key — lấy tại console.anthropic.com';
+  }
+}
+function saveApiKey() {
+  const key = document.getElementById('aiApiKeyInput').value.trim();
+  if (key) { localStorage.setItem('anthropic_api_key', key); showCopyToast('✅ Đã lưu API key!'); }
+  else { localStorage.removeItem('anthropic_api_key'); showCopyToast('🗑 Đã xoá API key'); }
+  updateKeyStatus(key);
+}
+
 async function doSummarize() {
   const url = aiUrlInput.value.trim();
-  if (!url || !url.startsWith('http')) {
-    aiUrlInput.focus(); return;
+  if (!url || !url.startsWith('http')) { aiUrlInput.focus(); return; }
+
+  const apiKey = document.getElementById('aiApiKeyInput').value.trim() ||
+                 localStorage.getItem('anthropic_api_key') || '';
+  if (!apiKey) {
+    document.getElementById('aiResultTitle').textContent = '';
+    document.getElementById('aiResultText').textContent =
+      '⚠️ Vui lòng nhập Anthropic API key vào ô phía trên rồi nhấn 💾 Lưu key.';
+    aiResult.classList.add('ai-error', 'show');
+    document.getElementById('aiApiKeyInput').focus();
+    return;
   }
+
   aiLoading.classList.add('show');
   aiResult.classList.remove('show');
   aiSubmit.disabled = true;
 
   try {
-    // Gọi trực tiếp Anthropic API với web_search để đọc bài báo
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
         'anthropic-dangerous-direct-browser-access': 'true'
       },
@@ -1253,37 +1312,34 @@ async function doSummarize() {
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
-          content: 'Hãy truy cập và tóm tắt bài báo tại URL này bằng 4-5 câu tiếng Việt rõ ràng, đầy đủ thông tin chính. Chỉ trả lời văn bản thuần tuý, không markdown. URL: ' + url
+          content: 'Hãy truy cập và tóm tắt bài báo tại URL sau bằng 4-5 câu tiếng Việt rõ ràng, đầy đủ thông tin chính. Chỉ trả lời văn bản thuần tuý, không markdown. URL: ' + url
         }]
       })
     });
 
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
-      // Nếu không có API key (unauthorized) → thông báo cần Vercel
-      if (res.status === 401 || res.status === 403) {
-        throw new Error('Tính năng này cần cấu hình API key trên Vercel. Vui lòng deploy backend.');
-      }
-      throw new Error(errJson.error?.message || 'Lỗi API: ' + res.status);
+      if (res.status === 401) throw new Error('API key không hợp lệ hoặc hết hạn. Kiểm tra lại key.');
+      throw new Error(errJson.error?.message || 'Lỗi API: HTTP ' + res.status);
     }
 
     const data = await res.json();
-    // Lấy text từ response (có thể có nhiều content blocks do tool use)
     let summary = '';
     if (data.content) {
       for (const block of data.content) {
         if (block.type === 'text' && block.text) summary += block.text;
       }
     }
-    if (!summary) summary = '(Không có kết quả)';
+    if (!summary) summary = '(Không có kết quả — bài có thể yêu cầu đăng nhập)';
 
-    document.getElementById('aiResultTitle').textContent = url.replace(/^https?:\/\//, '').split('/').slice(0,2).join('/');
-    document.getElementById('aiResultText').textContent  = summary;
+    document.getElementById('aiResultTitle').textContent =
+      url.replace(/^https?:\/\//, '').split('/').slice(0, 2).join('/');
+    document.getElementById('aiResultText').textContent = summary;
     aiResult.classList.remove('ai-error');
     aiResult.classList.add('show');
   } catch(e) {
     document.getElementById('aiResultTitle').textContent = '';
-    document.getElementById('aiResultText').textContent  = '⚠️ ' + e.message;
+    document.getElementById('aiResultText').textContent = '⚠️ ' + e.message;
     aiResult.classList.add('ai-error', 'show');
   } finally {
     aiLoading.classList.remove('show');

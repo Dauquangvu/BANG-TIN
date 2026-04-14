@@ -28,43 +28,84 @@ function parseRSS(xml) {
     var desc    = strip(get('description'));
     var pubDate = get('pubDate');
     if (title && link) {
-      items.push({ title: title, link: link.trim(), excerpt: desc.slice(0, 220), pubDate: pubDate });
+      items.push({ title: title, link: link.trim(), excerpt: desc.slice(0, 400), pubDate: pubDate });
     }
     if (items.length >= 3) break;
   }
   return items;
 }
 
+async function fetchArticleContent(url) {
+  try {
+    var r = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BangTin/1.0)', 'Accept': 'text/html' },
+      signal: AbortSignal.timeout(6000)
+    });
+    if (!r.ok) return null;
+    var html = await r.text();
+
+    var paragraphs = [];
+
+    var sapoMatch = html.match(/class="description"[^>]*>([\s\S]*?)<\/p>/i);
+    if (sapoMatch) paragraphs.push(strip(sapoMatch[1]));
+
+    var articleMatch = html.match(/class="(?:fck_detail|article-body)[^"]*"[^>]*>([\s\S]{100,5000}?)(?=<div class="article-relate|<div class="tags|<footer)/i);
+    if (articleMatch) {
+      var pRe = /<p[^>]*>([\s\S]*?)<\/p>/g;
+      var pm, count = 0;
+      while ((pm = pRe.exec(articleMatch[1])) !== null && count < 6) {
+        var txt = strip(pm[1]);
+        if (txt.length > 40) { paragraphs.push(txt); count++; }
+      }
+    }
+
+    if (paragraphs.length === 0) {
+      var descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)
+                   || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
+      if (descMatch) paragraphs.push(descMatch[1].trim());
+    }
+
+    return paragraphs.join(' ').slice(0, 1500) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function summarize(items) {
-  var key     = process.env.AI_API_KEY;
-  var base    = (process.env.AI_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, '');
-  var model   = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
-  var url     = base + '/v1/messages';
+  var key   = process.env.AI_API_KEY;
+  var base  = (process.env.AI_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, '');
+  var model = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
+  var endpoint = base + '/v1/messages';
 
   var prompt = items.map(function(it, i) {
-    return 'BAI ' + (i + 1) + ': ' + it.title + '\nMO TA: ' + it.excerpt;
-  }).join('\n\n');
+    var body = it.fullContent || it.excerpt || it.title;
+    return 'BÀI ' + (i + 1) + ': ' + it.title + '\nNỘI DUNG: ' + body;
+  }).join('\n\n---\n\n');
 
-  var body = JSON.stringify({
+  var reqBody = JSON.stringify({
     model: model,
-    max_tokens: 600,
+    max_tokens: 800,
     messages: [{
       role: 'user',
-      content: 'Tom tat ngan gon moi bai bang 1-2 cau tieng Viet. Tra ve JSON array 3 chuoi. Chi JSON.\n\n' + prompt
+      content: 'Bạn là trợ lý tóm tắt tin tức quân sự. Hãy tóm tắt mỗi bài báo dưới đây thành 3-4 câu tiếng Việt rõ ràng, nêu đủ thông tin chính (ai, làm gì, ở đâu, kết quả). Trả về JSON array gồm ' + items.length + ' chuỗi. Chỉ JSON thuần, không markdown, không giải thích.\n\n' + prompt
     }]
   });
 
-  var r = await fetch(url, {
+  var r = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': key,
       'anthropic-version': '2023-06-01'
     },
-    body: body
+    body: reqBody,
+    signal: AbortSignal.timeout(25000)
   });
 
-  if (!r.ok) throw new Error('AI ' + r.status);
+  if (!r.ok) {
+    var errText = await r.text();
+    throw new Error('AI ' + r.status + ': ' + errText.slice(0, 300));
+  }
   var d = await r.json();
   var t = (d.content && d.content[0] && d.content[0].text) ? d.content[0].text : '[]';
   return JSON.parse(t.replace(/```json|```/g, '').trim());
@@ -75,25 +116,36 @@ module.exports = async function(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json');
 
-  var type = req.query.type;
+  var type   = req.query.type;
+  var withAI = req.query.ai === '1';
+
   if (!RSS[type]) {
-    return res.status(400).json({ error: 'type phai la: thegioi hoac trongnuoc' });
+    return res.status(400).json({ error: 'type phải là: thegioi hoặc trongnuoc' });
   }
 
   try {
     var rss = await fetch(RSS[type], {
-      headers: { 'User-Agent': 'BangTin/1.0' }
+      headers: { 'User-Agent': 'BangTin/1.0' },
+      signal: AbortSignal.timeout(8000)
     });
     if (!rss.ok) throw new Error('RSS ' + rss.status);
     var xml   = await rss.text();
     var items = parseRSS(xml);
 
-    if (process.env.AI_API_KEY && items.length > 0) {
+    if (withAI && process.env.AI_API_KEY && items.length > 0) {
       try {
-        var sums = await summarize(items);
-        items.forEach(function(it, i) { it.summary = sums[i] || null; });
+        var toSum = items.slice(0, 2);
+        var contents = await Promise.all(toSum.map(it => fetchArticleContent(it.link)));
+        toSum.forEach(function(it, i) { if (contents[i]) it.fullContent = contents[i]; });
+
+        var sums = await summarize(toSum);
+        toSum.forEach(function(it, i) {
+          it.summary = sums[i] || null;
+          delete it.fullContent;
+        });
       } catch (e) {
-        console.warn('AI bo qua:', e.message);
+        console.warn('AI lỗi:', e.message);
+        // Trả về items bình thường, không crash
       }
     }
 

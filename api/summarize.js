@@ -10,6 +10,102 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+const PREFERRED_MODELS = [
+  "claude-3-haiku-20240307",
+  "claude-3-5-haiku-20241022",
+  "claude-haiku",
+];
+
+function uniqueNonEmpty(arr) {
+  return [...new Set(arr.map((v) => (v || "").trim()).filter(Boolean))];
+}
+
+function parseModelEnv(raw) {
+  if (!raw) return [];
+  return raw
+    .split(/[\s,;|]+/)
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function getModelCandidates() {
+  const envPrimary = process.env.AI_MODEL || process.env.ANTHROPIC_MODEL || "";
+  const envList = parseModelEnv(process.env.AI_MODELS || process.env.ANTHROPIC_MODELS || "");
+  return uniqueNonEmpty([envPrimary, ...envList, ...PREFERRED_MODELS]);
+}
+
+function buildAuthSchemes(apiKey) {
+  return [
+    {
+      name: "x-api-key+version",
+      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+    },
+    {
+      name: "bearer+version",
+      headers: { Authorization: `Bearer ${apiKey}`, "anthropic-version": "2023-06-01" },
+    },
+    {
+      name: "x-api-key",
+      headers: { "x-api-key": apiKey },
+    },
+    {
+      name: "bearer",
+      headers: { Authorization: `Bearer ${apiKey}` },
+    },
+  ];
+}
+
+function buildEndpointCandidates(baseUrl) {
+  const trimmed = (baseUrl || "https://api.anthropic.com").replace(/\/+$/, "");
+  const endpoints = [];
+
+  if (/\/v1$/i.test(trimmed)) {
+    endpoints.push(`${trimmed}/messages`);
+  } else {
+    endpoints.push(`${trimmed}/v1/messages`);
+    endpoints.push(`${trimmed}/messages`);
+  }
+
+  return uniqueNonEmpty(endpoints);
+}
+
+function extractSummaryText(data) {
+  if (!data) return "";
+
+  // Anthropic Messages API
+  const fromAnthropicArray = Array.isArray(data.content)
+    ? data.content.find((b) => b?.type === "text")?.text || data.content[0]?.text || ""
+    : "";
+  if (typeof fromAnthropicArray === "string" && fromAnthropicArray.trim()) {
+    return fromAnthropicArray.trim();
+  }
+
+  // Một số proxy trả content là string
+  if (typeof data.content === "string" && data.content.trim()) {
+    return data.content.trim();
+  }
+
+  // OpenAI-compatible proxy format
+  const fromChoices = data?.choices?.[0]?.message?.content || data?.choices?.[0]?.text || "";
+  if (typeof fromChoices === "string" && fromChoices.trim()) {
+    return fromChoices.trim();
+  }
+
+  // Fallback generic
+  if (typeof data.text === "string" && data.text.trim()) {
+    return data.text.trim();
+  }
+
+  return "";
+}
+
+function shouldKeepTrying(status, rawText) {
+  if ([400, 401, 403, 404, 408, 409, 422, 429].includes(status)) return true;
+  const lower = (rawText || "").toLowerCase();
+  if (lower.includes("model") || lower.includes("quota") || lower.includes("auth")) return true;
+  return false;
+}
+
 export default async function handler(req, res) {
   if (req.method === "OPTIONS") {
     return res.status(200).set(CORS_HEADERS).end();
@@ -25,12 +121,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "URL không hợp lệ" });
   }
 
-  const AI_API_KEY = process.env.AI_API_KEY;
-  const AI_BASE_URL = (process.env.AI_BASE_URL || "https://api.anthropic.com").replace(/\/$/, "");
-  const AI_MODEL = process.env.AI_MODEL || "claude-haiku-4-5-20251001";
+  const AI_API_KEY = process.env.AI_API_KEY || process.env.ANTHROPIC_API_KEY;
+  const AI_BASE_URL = (
+    process.env.AI_BASE_URL || process.env.API_BASE_URL || process.env.ANTHROPIC_BASE_URL || "https://api.anthropic.com"
+  ).replace(/\/+$/, "");
 
   if (!AI_API_KEY) {
-    return res.status(500).json({ error: "Thiếu AI_API_KEY trong environment" });
+    return res.status(500).json({ error: "Thiếu AI_API_KEY/ANTHROPIC_API_KEY trong environment" });
   }
 
   // ── BƯỚC 1: Lấy nội dung bài báo qua r.jina.ai (bypass Cloudflare) ──
@@ -65,8 +162,8 @@ export default async function handler(req, res) {
         .trim()
         .slice(0, 6000);
     }
-  } catch (_) {
-    // Jina thất bại → thử direct fetch bên dưới
+  } catch (err) {
+    console.warn("[summarize] jina fetch failed:", err?.message || err);
   }
 
   // ── BƯỚC 2: Fallback — direct fetch ──
@@ -118,79 +215,123 @@ export default async function handler(req, res) {
     return res.status(422).json({ error: "Không đọc được nội dung bài báo." });
   }
 
-  // ── BƯỚC 3: Gửi lên Claude API ──
-  // Thử lần lượt các auth scheme vì proxy gwai.cloud có thể dùng Bearer thay x-api-key
-  const endpoint = `${AI_BASE_URL}/v1/messages`;
-  const body = JSON.stringify({
-    model: AI_MODEL,
-    max_tokens: 1000,
-    messages: [
-      {
-        role: "user",
-        content: `Hãy tóm tắt bài báo sau bằng tiếng Việt trong 4-5 câu ngắn gọn, súc tích:\n\n${articleText}`,
-      },
-    ],
+  // ── BƯỚC 3: Gửi lên Claude API với fallback model/auth/endpoint ──
+  const modelCandidates = getModelCandidates();
+  const endpointCandidates = buildEndpointCandidates(AI_BASE_URL);
+  const authSchemes = buildAuthSchemes(AI_API_KEY);
+
+  console.log("[summarize] start request", {
+    baseUrl: AI_BASE_URL,
+    endpointCount: endpointCandidates.length,
+    authCount: authSchemes.length,
+    models: modelCandidates,
+    articleChars: articleText.length,
   });
 
-  const authSchemes = [
-    // Scheme 1: chuẩn Anthropic
-    { "x-api-key": AI_API_KEY, "anthropic-version": "2023-06-01" },
-    // Scheme 2: Bearer (nhiều proxy dùng cái này)
-    { Authorization: `Bearer ${AI_API_KEY}`, "anthropic-version": "2023-06-01" },
-    // Scheme 3: Bearer không có anthropic-version (proxy tự thêm)
-    { Authorization: `Bearer ${AI_API_KEY}` },
-  ];
-
-  let lastStatus = 0;
+  let lastStatus = 500;
   let lastRaw = "";
+  let attempt = 0;
 
-  for (const authHeaders of authSchemes) {
-    let claudeRes;
-    try {
-      claudeRes = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders },
-        body,
-      });
-    } catch (err) {
-      return res.status(502).json({ error: "Không kết nối được Claude API: " + err.message });
-    }
+  for (const endpoint of endpointCandidates) {
+    for (const auth of authSchemes) {
+      for (const model of modelCandidates) {
+        attempt += 1;
+        const body = JSON.stringify({
+          model,
+          max_tokens: 1000,
+          messages: [
+            {
+              role: "user",
+              content: `Hãy tóm tắt bài báo sau bằng tiếng Việt trong 4-5 câu ngắn gọn, súc tích:\n\n${articleText}`,
+            },
+          ],
+        });
 
-    const rawText = await claudeRes.text();
+        console.log(`[summarize] attempt #${attempt}`, {
+          endpoint,
+          auth: auth.name,
+          model,
+        });
 
-    if (claudeRes.ok) {
-      let data;
-      try {
-        data = JSON.parse(rawText);
-      } catch (_) {
-        return res
-          .status(500)
-          .json({ error: "Claude trả về không phải JSON", raw: rawText.slice(0, 300) });
+        let upstreamRes;
+        try {
+          upstreamRes = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...auth.headers },
+            body,
+          });
+        } catch (err) {
+          console.warn("[summarize] upstream fetch error", {
+            endpoint,
+            auth: auth.name,
+            model,
+            message: err?.message || String(err),
+          });
+          lastStatus = 502;
+          lastRaw = err?.message || String(err);
+          continue;
+        }
+
+        const rawText = await upstreamRes.text();
+        lastStatus = upstreamRes.status;
+        lastRaw = rawText;
+
+        console.log("[summarize] upstream response", {
+          endpoint,
+          auth: auth.name,
+          model,
+          status: upstreamRes.status,
+        });
+
+        if (upstreamRes.ok) {
+          let data;
+          try {
+            data = JSON.parse(rawText);
+          } catch (_) {
+            console.warn("[summarize] non-JSON success response", {
+              endpoint,
+              auth: auth.name,
+              model,
+            });
+            return res.status(500).json({
+              error: "API trả về không phải JSON",
+              detail: rawText.slice(0, 300),
+            });
+          }
+
+          const summary = extractSummaryText(data);
+          if (summary) {
+            return res.status(200).json({ summary, modelUsed: model });
+          }
+
+          console.warn("[summarize] empty summary text", {
+            endpoint,
+            auth: auth.name,
+            model,
+          });
+          continue;
+        }
+
+        // Retry/fallback tiếp khi 403 hoặc các lỗi có thể do model/auth/proxy
+        if (!shouldKeepTrying(upstreamRes.status, rawText)) {
+          console.error("[summarize] stop retry due to non-retriable status", {
+            endpoint,
+            auth: auth.name,
+            model,
+            status: upstreamRes.status,
+          });
+          return res.status(upstreamRes.status).json({
+            error: `Claude API lỗi ${upstreamRes.status}`,
+            detail: rawText.slice(0, 500),
+          });
+        }
       }
-
-      const summary =
-        data?.content?.find((b) => b.type === "text")?.text ||
-        data?.content?.[0]?.text ||
-        "";
-
-      if (!summary) {
-        return res
-          .status(500)
-          .json({ error: "Claude không trả về nội dung", raw: rawText.slice(0, 300) });
-      }
-
-      return res.status(200).json({ summary });
     }
-
-    lastStatus = claudeRes.status;
-    lastRaw = rawText;
-
-    // Chỉ retry nếu là lỗi auth (401/403)
-    if (claudeRes.status !== 401 && claudeRes.status !== 403) break;
   }
 
-  return res.status(lastStatus).json({
-    error: `Claude API lỗi ${lastStatus} — Key không hợp lệ hoặc hết quota trên proxy ${AI_BASE_URL}`,
-    detail: lastRaw.slice(0, 500),
+  return res.status(lastStatus || 500).json({
+    error: `Claude API lỗi ${lastStatus} — thử tất cả fallback model/auth/endpoint nhưng chưa thành công`,
+    detail: (lastRaw || "").slice(0, 500),
+    triedModels: modelCandidates,
   });
 }

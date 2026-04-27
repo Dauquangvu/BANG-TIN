@@ -94,6 +94,215 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 5px 6px;
     }
+    .tabs-row2 {
+      grid-template-columns: repeat(4, 1fr) !important;
+    }
+    /* Row-2 tabs span inside existing 3-col grid but overflow nicely */
+    .tab-btn.t2 { flex: 1; min-width: 0; }
+    .tabs-row2-flex {
+      padding-top: 0 !important;
+      display: flex !important;
+      gap: 6px;
+    }
+    .tabs-row2-flex .tab-btn.t2 { flex: 1; }
+
+    /* ── BOXCHAT PANEL ── */
+    .boxchat-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .boxchat-input-card {
+      background: var(--cream);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 12px var(--shadow);
+    }
+    .boxchat-hd {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .boxchat-hd-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #1565c0, #0d47a1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .boxchat-hd-text { font-weight: 800; color: var(--text); font-size: 1rem; }
+    .boxchat-hd-sub  { color: var(--muted); font-size: 0.78rem; margin-top:1px; }
+    .boxchat-url-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .boxchat-url-input {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+      min-width: 0;
+    }
+    .boxchat-url-input:focus { border-color: var(--blue); }
+    .boxchat-submit {
+      background: linear-gradient(135deg, #1565c0, #0d47a1);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity .2s, transform .1s;
+    }
+    .boxchat-submit:hover  { opacity: .88; }
+    .boxchat-submit:active { transform: scale(.97); }
+    .boxchat-submit:disabled { opacity: .45; cursor: default; transform: none; }
+    .boxchat-hint {
+      margin-top: 8px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* Boxchat loading */
+    .boxchat-loading {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #e3f2fd;
+      border-radius: 10px;
+      color: var(--blue-dk);
+      font-size: .85rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .boxchat-loading.show { display: flex; }
+    .bc-spin {
+      width: 18px; height: 18px;
+      border: 3px solid #90caf9;
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Boxchat history */
+    .boxchat-history-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .boxchat-history-title {
+      font-weight: 800;
+      color: var(--text);
+      font-size: .95rem;
+    }
+    .boxchat-clear-btn {
+      background: none;
+      border: 1px solid #e0c080;
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: .75rem;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .boxchat-clear-btn:hover { background: #fff8e1; color: var(--red); border-color: var(--red); }
+    .boxchat-empty {
+      text-align: center;
+      padding: 28px 20px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+    .boxchat-empty .bc-empty-icon { font-size: 2rem; margin-bottom: 8px; }
+
+    /* Boxchat result item */
+    .bc-item {
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px var(--shadow);
+    }
+    .bc-item-hd {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px 8px;
+      background: linear-gradient(90deg, #fff8e1, #fff);
+      border-bottom: 1px solid #e8d5a0;
+    }
+    .bc-item-badge {
+      background: #1565c0;
+      color: #fff;
+      font-size: .68rem;
+      font-weight: 800;
+      border-radius: 20px;
+      padding: 2px 8px;
+      flex-shrink: 0;
+    }
+    .bc-item-domain {
+      font-size: .78rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    .bc-item-time {
+      font-size: .72rem;
+      color: #bbb;
+      flex-shrink: 0;
+    }
+    .bc-item-body { padding: 12px 14px; }
+    .bc-item-summary {
+      font-size: .88rem;
+      color: var(--text);
+      line-height: 1.65;
+    }
+    .bc-item-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #f0e0b0;
+    }
+    .bc-action-btn {
+      font-size: .75rem;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 3px 12px;
+      cursor: pointer;
+      border: 1px solid;
+      background: #fff;
+      transition: background .15s;
+    }
+    .bc-action-btn.link  { color: var(--blue); border-color: #aed6f1; }
+    .bc-action-btn.link:hover  { background: #e3f2fd; }
+    .bc-action-btn.copy  { color: var(--text); border-color: var(--border); }
+    .bc-action-btn.copy:hover  { background: #fff8e1; }
+    .bc-action-btn.del   { color: #c62828; border-color: #ffcdd2; }
+    .bc-action-btn.del:hover   { background: #ffebee; }
+    .bc-item.error .bc-item-hd { background: #ffebee; border-bottom-color: #ffcdd2; }
+    .bc-item.error .bc-item-badge { background: #c62828; }
+    .bc-item.error .bc-item-summary { color: #c62828; }
     .tab-btn {
       padding: 9px 4px;
       border: none;
@@ -597,11 +806,14 @@
   <button class="tab-btn"        data-tab="tab-cauhoi">❓ Câu Hỏi Ngày</button>
   <button class="tab-btn"        data-tab="tab-luat">⚖️ Tuần Pháp Luật</button>
   <!-- Divider -->
-  <div class="tabs-divider"></div>
-  <!-- Row 2 -->
+  <div class="tabs-divider" style="grid-column:1/-1"></div>
+</div>
+<!-- Row 2: 4 tabs in flex -->
+<div class="tabs-wrap tabs-row2-flex">
   <button class="tab-btn t2" data-tab="tab-mucdich">🏆 Mục Tiêu Thi Đua</button>
   <button class="tab-btn t2" data-tab="tab-thegioi">🌍 Tin Thế Giới</button>
   <button class="tab-btn t2" data-tab="tab-trongnuoc">🇻🇳 Tin Trong Nước</button>
+  <button class="tab-btn t2" data-tab="tab-boxchat">💬 Boxchat AI</button>
 </div>
 
 <main>
@@ -706,6 +918,49 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
     </div>
     <div class="news-list" id="listTrongNuoc">
       <div class="no-data"><div class="nd-icon">📰</div><p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>
+    </div>
+  </div>
+
+  <!-- ══════ TAB 7: BOXCHAT AI ══════ -->
+  <div class="panel" id="tab-boxchat">
+    <div class="boxchat-wrap">
+
+      <!-- Input card -->
+      <div class="boxchat-input-card">
+        <div class="boxchat-hd">
+          <div class="boxchat-hd-icon">🤖</div>
+          <div>
+            <div class="boxchat-hd-text">AI Đọc &amp; Tóm Tắt Bài Báo</div>
+            <div class="boxchat-hd-sub">Dán link bài báo → AI tự đọc và tóm tắt 4–5 dòng. Kết quả lưu cho mọi người xem.</div>
+          </div>
+        </div>
+        <div class="boxchat-url-row">
+          <input class="boxchat-url-input" id="bcUrlInput" type="url"
+            placeholder="https://vnexpress.net/..." autocomplete="off"/>
+          <button class="boxchat-submit" id="bcSubmitBtn">🤖 Tóm tắt</button>
+        </div>
+        <div class="boxchat-hint">💡 Hỗ trợ VnExpress, Tuổi Trẻ, Thanh Niên, Zing… — Tự động tóm tắt khi paste link</div>
+        <div class="boxchat-loading" id="bcLoading">
+          <div class="bc-spin"></div>
+          <span>AI đang đọc bài báo, vui lòng chờ…</span>
+        </div>
+      </div>
+
+      <!-- History list -->
+      <div class="card" style="padding:16px 18px">
+        <div class="boxchat-history-hd">
+          <div class="boxchat-history-title">📋 Lịch sử tóm tắt <span id="bcCount" style="color:var(--muted);font-weight:600;font-size:.85rem"></span></div>
+          <button class="boxchat-clear-btn" id="bcClearBtn">🗑 Xoá tất cả</button>
+        </div>
+        <div id="bcStatus" style="display:none;font-size:.78rem;margin-bottom:8px;padding:4px 0"></div>
+        <div id="bcList">
+          <div class="boxchat-empty">
+            <div class="bc-empty-icon">💬</div>
+            <p>Chưa có bài nào được tóm tắt.<br>Dán link bài báo phía trên và nhấn <strong>Tóm tắt</strong>.</p>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1340,6 +1595,259 @@ document.addEventListener('keydown', e => {
     if (active==='tab-cauhoi') { const d=adjDate(DATA_QA,curQA,  1); if(d)goQA(d);  }
     if (active==='tab-luat')   { const k=adjWeek(curWeek, 1); if(k)goLuat(k);        }
   }
+});
+
+/* ════════════════════════════════════════════
+   TAB 7 — BOXCHAT AI
+   ✅ Lưu lịch sử SERVER-SIDE qua /api/chat-history (Vercel KV)
+   ✅ Mọi thiết bị / trình duyệt đều thấy chung một lịch sử
+   ✅ Fallback localStorage nếu server lỗi
+════════════════════════════════════════════ */
+const BC_LS_KEY = 'boxchat_history_v1';   // localStorage fallback
+let BC_HISTORY  = [];                      // [{id,url,domain,summary,error,ts}]
+let BC_LOADING_HIST = false;
+
+/* ── Helpers ── */
+function bcFmtTime(ts) {
+  if (!ts) return '';
+  try {
+    return new Date(ts).toLocaleString('vi-VN',
+      {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  } catch(e) { return ''; }
+}
+function bcDomain(url) {
+  try { return new URL(url).hostname.replace('www.',''); } catch(e) { return url.slice(0,40); }
+}
+function bcLsLoad()  {
+  try { return JSON.parse(localStorage.getItem(BC_LS_KEY)||'[]'); } catch{ return []; }
+}
+function bcLsSave(items) {
+  try { localStorage.setItem(BC_LS_KEY, JSON.stringify(items.slice(0,50))); } catch{}
+}
+
+/* ── Server API calls ── */
+async function bcServerGet() {
+  const res = await fetch('/api/chat-history', { cache:'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const d = await res.json();
+  return d.items || [];
+}
+async function bcServerAdd(item) {
+  const res = await fetch('/api/chat-history', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({item})
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const d = await res.json();
+  return d.items || null;
+}
+async function bcServerDelete(id) {
+  const res = await fetch('/api/chat-history?id=' + encodeURIComponent(id), {method:'DELETE'});
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const d = await res.json();
+  return d.items || null;
+}
+async function bcServerClear() {
+  const res = await fetch('/api/chat-history?all=1', {method:'DELETE'});
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const d = await res.json();
+  return d.items || [];
+}
+
+/* ── Render ── */
+function bcSetStatus(msg, isErr) {
+  const el = document.getElementById('bcStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = isErr ? '#c62828' : '#888';
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function bcRender() {
+  const list  = document.getElementById('bcList');
+  const count = document.getElementById('bcCount');
+  if (!BC_HISTORY.length) {
+    list.innerHTML = `<div class="boxchat-empty">
+      <div class="bc-empty-icon">💬</div>
+      <p>Chưa có bài nào được tóm tắt.<br>Dán link bài báo phía trên và nhấn <strong>Tóm tắt</strong>.</p>
+    </div>`;
+    if (count) count.textContent = '';
+    return;
+  }
+  if (count) count.textContent = `(${BC_HISTORY.length} bài)`;
+  list.innerHTML = BC_HISTORY.map(item => {
+    const safeUrl = item.url.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    return `
+    <div class="bc-item${item.error ? ' error' : ''}" id="bc-item-${item.id}">
+      <div class="bc-item-hd">
+        <span class="bc-item-badge">${item.error ? '⚠️ Lỗi' : '🤖 AI'}</span>
+        <span class="bc-item-domain" title="${safeUrl}">${item.domain}</span>
+        <span class="bc-item-time">${bcFmtTime(item.ts)}</span>
+      </div>
+      <div class="bc-item-body">
+        <div class="bc-item-summary">${item.summary || item.error || ''}</div>
+        <div class="bc-item-actions">
+          <a class="bc-action-btn link" href="${safeUrl}" target="_blank" rel="noopener">🔗 Mở bài</a>
+          <button class="bc-action-btn copy" onclick="bcCopyLink('${safeUrl}')">📋 Copy link</button>
+          <button class="bc-action-btn del"  onclick="bcDelete('${item.id}')">🗑 Xoá</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function bcCopyLink(url) {
+  navigator.clipboard.writeText(url)
+    .then(() => showCopyToast('✅ Đã sao chép link!'))
+    .catch(() => { prompt('Copy link này:', url); });
+}
+
+/* ── Load lịch sử khi mở tab ── */
+async function bcInitHistory() {
+  if (BC_LOADING_HIST) return;
+  BC_LOADING_HIST = true;
+
+  // Hiện cache local tạm thời
+  const localItems = bcLsLoad();
+  if (localItems.length) {
+    BC_HISTORY = localItems;
+    bcRender();
+  }
+  bcSetStatus('⏳ Đang tải lịch sử từ server…');
+
+  try {
+    const serverItems = await bcServerGet();
+    BC_HISTORY = serverItems;
+    bcLsSave(serverItems);          // cập nhật localStorage
+    bcRender();
+    bcSetStatus(serverItems.length ? '' : '');
+  } catch(e) {
+    // Giữ dữ liệu local, báo lỗi nhẹ
+    bcSetStatus('⚠️ Không kết nối được server — đang dùng dữ liệu cục bộ', true);
+  } finally {
+    BC_LOADING_HIST = false;
+  }
+}
+
+/* ── Xoá 1 item ── */
+async function bcDelete(id) {
+  // Xoá ngay trên UI
+  BC_HISTORY = BC_HISTORY.filter(it => it.id !== id);
+  bcLsSave(BC_HISTORY);
+  bcRender();
+  // Đồng bộ server
+  try {
+    const updated = await bcServerDelete(id);
+    if (updated) { BC_HISTORY = updated; bcLsSave(updated); bcRender(); }
+  } catch(e) {
+    bcSetStatus('⚠️ Xoá trên server thất bại: ' + e.message, true);
+  }
+}
+
+/* ── Xoá tất cả ── */
+document.getElementById('bcClearBtn').addEventListener('click', async () => {
+  if (!BC_HISTORY.length) return;
+  if (!confirm('Xoá toàn bộ lịch sử tóm tắt trên server?')) return;
+  BC_HISTORY = [];
+  bcLsSave([]);
+  bcRender();
+  try {
+    await bcServerClear();
+    bcSetStatus('');
+  } catch(e) {
+    bcSetStatus('⚠️ Xoá server thất bại: ' + e.message, true);
+  }
+});
+
+/* ── Tóm tắt bài báo ── */
+async function bcDoSummarize() {
+  const urlInput = document.getElementById('bcUrlInput');
+  const url = urlInput.value.trim();
+  if (!url || !url.startsWith('http')) { urlInput.focus(); return; }
+
+  // Check duplicate
+  const dup = BC_HISTORY.find(it => it.url === url && !it.error);
+  if (dup) {
+    showCopyToast('ℹ️ Link này đã được tóm tắt rồi!');
+    urlInput.value = '';
+    return;
+  }
+
+  const btn     = document.getElementById('bcSubmitBtn');
+  const loading = document.getElementById('bcLoading');
+  btn.disabled = true;
+  loading.classList.add('show');
+  bcSetStatus('');
+
+  let newItem;
+  try {
+    // Bước 1: gọi AI tóm tắt
+    const res = await fetch('/api/summarize', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Lỗi HTTP ' + res.status);
+
+    newItem = {
+      id:      Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+      url,
+      domain:  bcDomain(url),
+      summary: data.summary || '(Không có kết quả)',
+      ts:      Date.now()
+    };
+  } catch(e) {
+    newItem = {
+      id:     Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+      url,
+      domain: bcDomain(url),
+      error:  '⚠️ ' + e.message,
+      ts:     Date.now()
+    };
+  }
+
+  // Bước 2: Hiện ngay trên UI (optimistic)
+  BC_HISTORY.unshift(newItem);
+  bcLsSave(BC_HISTORY);
+  bcRender();
+
+  btn.disabled = false;
+  loading.classList.remove('show');
+  urlInput.value = '';
+
+  // Bước 3: Lưu lên server (không block UI)
+  try {
+    const updated = await bcServerAdd(newItem);
+    if (updated) {
+      BC_HISTORY = updated;
+      bcLsSave(updated);
+      bcRender();
+      bcSetStatus('✅ Đã lưu lên server — mọi thiết bị đều thấy');
+      setTimeout(() => bcSetStatus(''), 3000);
+    }
+  } catch(e) {
+    bcSetStatus('⚠️ Lưu server thất bại — chỉ lưu cục bộ: ' + e.message, true);
+  }
+}
+
+document.getElementById('bcSubmitBtn').addEventListener('click', bcDoSummarize);
+document.getElementById('bcUrlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') bcDoSummarize();
+});
+document.getElementById('bcUrlInput').addEventListener('paste', () => {
+  setTimeout(() => {
+    const v = document.getElementById('bcUrlInput').value.trim();
+    if (v.startsWith('http')) bcDoSummarize();
+  }, 120);
+});
+
+/* ── Tải lịch sử khi chuyển sang tab boxchat ── */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'tab-boxchat') bcInitHistory();
+  });
 });
 
 /* ════════════════════════════════════════════

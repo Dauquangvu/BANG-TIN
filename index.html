@@ -935,20 +935,6 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
 </a>
 
 
-<!-- ══ PASSWORD MODAL ══ -->
-<div class="pwd-modal-bg" id="pwdModalBg">
-  <div class="pwd-modal">
-    <h3>🔐 Xác nhận tải tin tức</h3>
-    <p>Nhập mật khẩu để tải <strong>cả hai</strong> phần tin tức (Trong nước &amp; Thế giới) cùng lúc.<br><small style="color:#c62828">⚠️ Bắt buộc nhập đúng mật khẩu — không tự động tải để tiết kiệm token.</small></p>
-    <input class="pwd-input" id="pwdInput" type="password"
-      placeholder="Mật khẩu…" autocomplete="off" maxlength="20"/>
-    <div class="pwd-btns">
-      <button class="pwd-cancel" id="pwdCancel">Huỷ</button>
-      <button class="pwd-ok" id="pwdOk">Xác nhận</button>
-    </div>
-    <div class="pwd-err" id="pwdErr">❌ Sai mật khẩu!</div>
-  </div>
-</div>
 
 <script>
 /* ════════════════════════════════════════════
@@ -1237,7 +1223,6 @@ function switchView(mode) {
    - Chỉ update khi nhập đúng mật khẩu
 ════════════════════════════════════════════ */
 const NEWS_STORE_KEY = { thegioi: 'news_cache_thegioi', trongnuoc: 'news_cache_trongnuoc' };
-const NEWS_PWD   = '324'; // ← đổi mật khẩu tại đây
 
 // Lưu cache vào localStorage
 function saveNewsCache(type, items) {
@@ -1336,26 +1321,54 @@ function renderNews(type, items) {
 }
 
 /* ── Load news — chỉ khi nhập đúng mật khẩu ── */
+// RSS feeds cho từng loại tin
+const RSS_FEEDS = {
+  thegioi: [
+    'https://vnexpress.net/rss/the-gioi.rss',
+    'https://tuoitre.vn/rss/the-gioi.rss'
+  ],
+  trongnuoc: [
+    'https://vnexpress.net/rss/thoi-su.rss',
+    'https://tuoitre.vn/rss/thoi-su.rss'
+  ]
+};
+
+// Dùng rss2json.com (miễn phí, không cần backend)
+async function fetchRSS(rssUrl) {
+  const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl) + '&count=8';
+  const res = await fetch(api);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (data.status !== 'ok') throw new Error(data.message || 'RSS error');
+  return data.items.map(it => ({
+    title: it.title,
+    link: it.link,
+    pubDate: it.pubDate,
+    excerpt: it.description ? it.description.replace(/<[^>]*>/g,'').slice(0, 200) : ''
+  }));
+}
+
 async function loadNews(type, withAI) {
   const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
   const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
 
-  document.getElementById(timeId).textContent = withAI ? '🤖 AI đang tóm tắt…' : '⏳ Đang tải tin…';
+  document.getElementById(timeId).textContent = '⏳ Đang tải tin…';
   document.getElementById(listId).innerHTML = [0,1,2].map(() =>
     '<div class="news-skeleton"><div class="skel-line" style="width:80%"></div>' +
     '<div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>'
   ).join('');
 
   try {
-    const url = '/api/news?type=' + type + (withAI ? '&ai=1' : '');
-    const res  = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    // Lưu vào runtime cache VÀ localStorage để mọi người vào sau đều thấy
-    NEWS_CACHE[type] = data.items;
-    saveNewsCache(type, data.items);
-    renderNews(type, data.items);
+    const feeds = RSS_FEEDS[type];
+    // Thử feed đầu, nếu lỗi thử feed dự phòng
+    let items = [];
+    for (const feed of feeds) {
+      try { items = await fetchRSS(feed); if (items.length) break; } catch(e) { continue; }
+    }
+    if (!items.length) throw new Error('Không lấy được tin từ RSS');
+    NEWS_CACHE[type] = items;
+    saveNewsCache(type, items);
+    renderNews(type, items);
   } catch(e) {
     console.warn('News failed:', e.message);
     document.getElementById(timeId).textContent = '⚠️ Lỗi tải tin';
@@ -1423,45 +1436,10 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-/* ── Password modal cho nút Làm mới / AI ── */
-let _pendingNewsType = null;
-
+/* ── Load news — gọi thẳng RSS, không cần mật khẩu ── */
 function reloadNews(type) {
-  _pendingNewsType = type;
-  document.getElementById('pwdInput').value = '';
-  document.getElementById('pwdErr').style.display = 'none';
-  document.getElementById('pwdModalBg').classList.add('open');
-  setTimeout(() => document.getElementById('pwdInput').focus(), 100);
+  loadNews(type, false);
 }
-
-document.getElementById('pwdCancel').addEventListener('click', () => {
-  document.getElementById('pwdModalBg').classList.remove('open');
-});
-document.getElementById('pwdOk').addEventListener('click', () => {
-  const val = document.getElementById('pwdInput').value.trim();
-  const errEl = document.getElementById('pwdErr');
-  errEl.style.display = 'none';
-  if (val === NEWS_PWD) {
-    document.getElementById('pwdModalBg').classList.remove('open');
-    // Tải CẢ HAI tin tức (Trong nước + Thế giới) chỉ cần nhập mật khẩu 1 lần
-    loadNews('thegioi', true);
-    loadNews('trongnuoc', true);
-  } else if (val === '') {
-    errEl.textContent = '❌ Vui lòng nhập mật khẩu!';
-    errEl.style.display = 'block';
-  } else {
-    errEl.textContent = '❌ Sai mật khẩu!';
-    errEl.style.display = 'block';
-  }
-});
-document.getElementById('pwdInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('pwdOk').click();
-});
-// Đóng modal khi click nền
-document.getElementById('pwdModalBg').addEventListener('click', e => {
-  if (e.target === document.getElementById('pwdModalBg'))
-    document.getElementById('pwdModalBg').classList.remove('open');
-});
 
 document.addEventListener('keydown', e => {
   const active = document.querySelector('.tab-btn.active')?.dataset.tab;

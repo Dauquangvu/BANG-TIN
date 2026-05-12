@@ -785,7 +785,7 @@
   <div class="header-top">
     <div class="header-emblem">
       <div class="star-row">★ ★ ★ ★ ★</div>
-      <div class="unit-text">Trung đoàn 1 — Sư đoàn 324</div>
+      <div class="unit-text">Sư đoàn 324</div>
     </div>
     <div class="header-title">
       <h1>📌 Bảng Tin 2026</h1>
@@ -813,7 +813,6 @@
   <button class="tab-btn t2" data-tab="tab-mucdich">🏆 Mục Tiêu Thi Đua</button>
   <button class="tab-btn t2" data-tab="tab-thegioi">🌍 Tin Thế Giới</button>
   <button class="tab-btn t2" data-tab="tab-trongnuoc">🇻🇳 Tin Trong Nước</button>
-  <button class="tab-btn t2" data-tab="tab-boxchat">💬 Boxchat AI</button>
 </div>
 
 <main>
@@ -921,89 +920,26 @@ Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nộ
     </div>
   </div>
 
-  <!-- ══════ TAB 7: BOXCHAT AI ══════ -->
-  <div class="panel" id="tab-boxchat">
-    <div class="boxchat-wrap">
-
-      <!-- Input card -->
-      <div class="boxchat-input-card">
-        <div class="boxchat-hd">
-          <div class="boxchat-hd-icon">🤖</div>
-          <div>
-            <div class="boxchat-hd-text">AI Đọc &amp; Tóm Tắt Bài Báo</div>
-            <div class="boxchat-hd-sub">Dán link bài báo → AI tự đọc và tóm tắt 4–5 dòng. Kết quả lưu cho mọi người xem.</div>
-          </div>
-        </div>
-        <div class="boxchat-url-row">
-          <input class="boxchat-url-input" id="bcUrlInput" type="url"
-            placeholder="https://vnexpress.net/..." autocomplete="off"/>
-          <button class="boxchat-submit" id="bcSubmitBtn">🤖 Tóm tắt</button>
-        </div>
-        <div class="boxchat-hint">💡 Hỗ trợ VnExpress, Tuổi Trẻ, Thanh Niên, Zing… — Tự động tóm tắt khi paste link</div>
-        <div class="boxchat-loading" id="bcLoading">
-          <div class="bc-spin"></div>
-          <span>AI đang đọc bài báo, vui lòng chờ…</span>
-        </div>
-      </div>
-
-      <!-- History list -->
-      <div class="card" style="padding:16px 18px">
-        <div class="boxchat-history-hd">
-          <div class="boxchat-history-title">📋 Lịch sử tóm tắt <span id="bcCount" style="color:var(--muted);font-weight:600;font-size:.85rem"></span></div>
-          <button class="boxchat-clear-btn" id="bcClearBtn">🗑 Xoá tất cả</button>
-        </div>
-        <div id="bcStatus" style="display:none;font-size:.78rem;margin-bottom:8px;padding:4px 0"></div>
-        <div id="bcList">
-          <div class="boxchat-empty">
-            <div class="bc-empty-icon">💬</div>
-            <p>Chưa có bài nào được tóm tắt.<br>Dán link bài báo phía trên và nhấn <strong>Tóm tắt</strong>.</p>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
 
 </main>
 
 <footer>
-  ★ Bảng Tin Trung đoàn 1 — Sư đoàn 324 &mdash; Dữ liệu 2026 ★
+  ★ Bảng Tin Sư đoàn 324 &mdash; Dữ liệu 2026 ★<br>
+  <span style="font-size:0.68rem;opacity:0.7">Phát triển bởi Đậu Quang Vũ ctv/c1/d16/f324</span>
 </footer>
 
-<!-- ══ AI CHAT BUBBLE ══ -->
-<button class="ai-bubble" id="aiBubble" title="AI đọc & tóm tắt bài báo">
+<!-- ══ AI CHAT BUBBLE — Mở Claude web để tóm tắt thủ công ══ -->
+<a class="ai-bubble" id="aiBubble" href="https://claude.ai" target="_blank" rel="noopener" title="Mở Claude AI để tóm tắt bài báo thủ công">
   🤖
-  <span class="ai-bubble-label">Dán link → AI tóm tắt</span>
-</button>
+  <span class="ai-bubble-label">Mở Claude → tóm tắt</span>
+</a>
 
-<!-- ══ AI SUMMARIZE MODAL ══ -->
-<div class="ai-modal-bg" id="aiModalBg">
-  <div class="ai-modal">
-    <div class="ai-modal-hd">
-      <span class="ai-modal-title">🤖 AI Đọc & Tóm Tắt Bài Báo</span>
-      <button class="ai-close-btn" id="aiCloseBtn">✕</button>
-    </div>
-    <div class="ai-modal-sub">Dán link bài báo bất kỳ → AI tự truy cập và tóm tắt 4–5 dòng</div>
-
-    <div class="ai-url-row">
-      <input class="ai-url-input" id="aiUrlInput" type="url"
-        placeholder="https://vnexpress.net/..." autocomplete="off"/>
-      <button class="ai-submit-btn" id="aiSubmitBtn">Tóm tắt</button>
-    </div>
-    <div class="ai-loading" id="aiLoading">⏳ AI đang đọc bài…</div>
-    <div class="ai-result" id="aiResult">
-      <div class="ai-result-title">🤖 Tóm tắt nội dung</div>
-      <div id="aiResultTitle" style="font-weight:700;margin-bottom:8px;color:var(--red-dk)"></div>
-      <div id="aiResultText"></div>
-    </div>
-  </div>
-</div>
 
 <!-- ══ PASSWORD MODAL ══ -->
 <div class="pwd-modal-bg" id="pwdModalBg">
   <div class="pwd-modal">
     <h3>🔐 Xác nhận tải tin tức</h3>
-    <p>Nhập mật khẩu để tải và AI tóm tắt tin.<br><small style="color:#c62828">⚠️ Bắt buộc nhập đúng mật khẩu — không tự động tải để tiết kiệm token.</small></p>
+    <p>Nhập mật khẩu để tải <strong>cả hai</strong> phần tin tức (Trong nước &amp; Thế giới) cùng lúc.<br><small style="color:#c62828">⚠️ Bắt buộc nhập đúng mật khẩu — không tự động tải để tiết kiệm token.</small></p>
     <input class="pwd-input" id="pwdInput" type="password"
       placeholder="Mật khẩu…" autocomplete="off" maxlength="20"/>
     <div class="pwd-btns">
@@ -1209,12 +1145,23 @@ function adjWeek(key, dir) {
 function currentWeekKey() {
   const n = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
   const yr = n.getFullYear();
-  const d = new Date(yr, n.getMonth(), n.getDate());
-  // Tính tuần theo thứ Hai: tuần 1 bắt đầu từ thứ Hai đầu tiên của tháng
-  const firstDay = new Date(yr, d.getMonth(), 1);
-  const firstDayDow = (firstDay.getDay() + 6) % 7; // Mon=0 ... Sun=6
-  const weekNum = Math.ceil((d.getDate() + firstDayDow) / 7);
-  const key = `2026-${pad(d.getMonth()+1)}-W${weekNum}`;
+  const month = n.getMonth();
+  const dayOfMonth = n.getDate();
+  // Tính tuần theo thứ Hai: tuần 1 là tuần chứa ngày 1 của tháng
+  // Thứ Hai đầu tiên của tháng
+  const firstDay = new Date(yr, month, 1);
+  const firstDayDow = (firstDay.getDay() + 6) % 7; // Mon=0...Sun=6
+  // Số ngày từ thứ Hai đầu tiên đến ngày hiện tại
+  // Nếu ngày 1 là Mon(0): first Mon = ngày 1
+  // Nếu ngày 1 là Tue(1)-Sun(6): first Mon = ngày 1 + (7 - firstDayDow)
+  const firstMonday = firstDayDow === 0 ? 1 : (8 - firstDayDow);
+  let weekNum;
+  if (dayOfMonth < firstMonday) {
+    weekNum = 1; // Trước thứ Hai đầu tiên → tuần 1
+  } else {
+    weekNum = Math.floor((dayOfMonth - firstMonday) / 7) + 2;
+  }
+  const key = `${yr}-${pad(month+1)}-W${weekNum}`;
   return DATA_WEEKS[key] ? key : allWeeks()[0];
 }
 function renderLuat(key) {
@@ -1496,7 +1443,9 @@ document.getElementById('pwdOk').addEventListener('click', () => {
   errEl.style.display = 'none';
   if (val === NEWS_PWD) {
     document.getElementById('pwdModalBg').classList.remove('open');
-    loadNews(_pendingNewsType, true); // CÓ AI
+    // Tải CẢ HAI tin tức (Trong nước + Thế giới) chỉ cần nhập mật khẩu 1 lần
+    loadNews('thegioi', true);
+    loadNews('trongnuoc', true);
   } else if (val === '') {
     errEl.textContent = '❌ Vui lòng nhập mật khẩu!';
     errEl.style.display = 'block';
@@ -1514,75 +1463,6 @@ document.getElementById('pwdModalBg').addEventListener('click', e => {
     document.getElementById('pwdModalBg').classList.remove('open');
 });
 
-/* ════════════════════════════════════════════
-   AI CHAT BUBBLE — tóm tắt bài từ link
-════════════════════════════════════════════ */
-const aiBubble  = document.getElementById('aiBubble');
-const aiModalBg = document.getElementById('aiModalBg');
-const aiCloseBtn= document.getElementById('aiCloseBtn');
-const aiUrlInput= document.getElementById('aiUrlInput');
-const aiSubmit  = document.getElementById('aiSubmitBtn');
-const aiLoading = document.getElementById('aiLoading');
-const aiResult  = document.getElementById('aiResult');
-
-aiBubble.addEventListener('click', () => {
-  aiModalBg.classList.add('open');
-  aiUrlInput.value = '';
-  aiResult.classList.remove('show', 'ai-error');
-  aiLoading.classList.remove('show');
-  setTimeout(() => aiUrlInput.focus(), 150);
-});
-aiCloseBtn.addEventListener('click', () => aiModalBg.classList.remove('open'));
-aiModalBg.addEventListener('click', e => { if (e.target === aiModalBg) aiModalBg.classList.remove('open'); });
-
-/* ── API Key management — không cần nữa (dùng backend Vercel) ── */
-
-async function doSummarize() {
-  const url = aiUrlInput.value.trim();
-  if (!url || !url.startsWith('http')) { aiUrlInput.focus(); return; }
-
-  aiLoading.classList.add('show');
-  aiResult.classList.remove('show', 'ai-error');
-  aiSubmit.disabled = true;
-
-  try {
-    // Gọi backend Vercel — key được giữ bí mật phía server
-    const res = await fetch('/api/summarize', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Lỗi API: HTTP ' + res.status);
-
-    const summary = data.summary || '(Không có kết quả — bài có thể yêu cầu đăng nhập)';
-    document.getElementById('aiResultTitle').textContent =
-      url.replace(/^https?:\/\//, '').split('/').slice(0, 2).join('/');
-    document.getElementById('aiResultText').textContent = summary;
-    aiResult.classList.remove('ai-error');
-    aiResult.classList.add('show');
-  } catch(e) {
-    document.getElementById('aiResultTitle').textContent = '';
-    document.getElementById('aiResultText').textContent = '⚠️ ' + e.message;
-    aiResult.classList.add('ai-error', 'show');
-  } finally {
-    aiLoading.classList.remove('show');
-    aiSubmit.disabled = false;
-  }
-}
-
-aiSubmit.addEventListener('click', doSummarize);
-aiUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSummarize(); });
-
-// Paste từ clipboard vào ô URL
-aiUrlInput.addEventListener('paste', () => {
-  setTimeout(() => { if (aiUrlInput.value.startsWith('http')) doSummarize(); }, 100);
-});
-
-
-
-
 document.addEventListener('keydown', e => {
   const active = document.querySelector('.tab-btn.active')?.dataset.tab;
   if (e.key==='ArrowLeft') {
@@ -1595,259 +1475,6 @@ document.addEventListener('keydown', e => {
     if (active==='tab-cauhoi') { const d=adjDate(DATA_QA,curQA,  1); if(d)goQA(d);  }
     if (active==='tab-luat')   { const k=adjWeek(curWeek, 1); if(k)goLuat(k);        }
   }
-});
-
-/* ════════════════════════════════════════════
-   TAB 7 — BOXCHAT AI
-   ✅ Lưu lịch sử SERVER-SIDE qua /api/chat-history (Vercel KV)
-   ✅ Mọi thiết bị / trình duyệt đều thấy chung một lịch sử
-   ✅ Fallback localStorage nếu server lỗi
-════════════════════════════════════════════ */
-const BC_LS_KEY = 'boxchat_history_v1';   // localStorage fallback
-let BC_HISTORY  = [];                      // [{id,url,domain,summary,error,ts}]
-let BC_LOADING_HIST = false;
-
-/* ── Helpers ── */
-function bcFmtTime(ts) {
-  if (!ts) return '';
-  try {
-    return new Date(ts).toLocaleString('vi-VN',
-      {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  } catch(e) { return ''; }
-}
-function bcDomain(url) {
-  try { return new URL(url).hostname.replace('www.',''); } catch(e) { return url.slice(0,40); }
-}
-function bcLsLoad()  {
-  try { return JSON.parse(localStorage.getItem(BC_LS_KEY)||'[]'); } catch{ return []; }
-}
-function bcLsSave(items) {
-  try { localStorage.setItem(BC_LS_KEY, JSON.stringify(items.slice(0,50))); } catch{}
-}
-
-/* ── Server API calls ── */
-async function bcServerGet() {
-  const res = await fetch('/api/chat-history', { cache:'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const d = await res.json();
-  return d.items || [];
-}
-async function bcServerAdd(item) {
-  const res = await fetch('/api/chat-history', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({item})
-  });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const d = await res.json();
-  return d.items || null;
-}
-async function bcServerDelete(id) {
-  const res = await fetch('/api/chat-history?id=' + encodeURIComponent(id), {method:'DELETE'});
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const d = await res.json();
-  return d.items || null;
-}
-async function bcServerClear() {
-  const res = await fetch('/api/chat-history?all=1', {method:'DELETE'});
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const d = await res.json();
-  return d.items || [];
-}
-
-/* ── Render ── */
-function bcSetStatus(msg, isErr) {
-  const el = document.getElementById('bcStatus');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.color = isErr ? '#c62828' : '#888';
-  el.style.display = msg ? 'block' : 'none';
-}
-
-function bcRender() {
-  const list  = document.getElementById('bcList');
-  const count = document.getElementById('bcCount');
-  if (!BC_HISTORY.length) {
-    list.innerHTML = `<div class="boxchat-empty">
-      <div class="bc-empty-icon">💬</div>
-      <p>Chưa có bài nào được tóm tắt.<br>Dán link bài báo phía trên và nhấn <strong>Tóm tắt</strong>.</p>
-    </div>`;
-    if (count) count.textContent = '';
-    return;
-  }
-  if (count) count.textContent = `(${BC_HISTORY.length} bài)`;
-  list.innerHTML = BC_HISTORY.map(item => {
-    const safeUrl = item.url.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    return `
-    <div class="bc-item${item.error ? ' error' : ''}" id="bc-item-${item.id}">
-      <div class="bc-item-hd">
-        <span class="bc-item-badge">${item.error ? '⚠️ Lỗi' : '🤖 AI'}</span>
-        <span class="bc-item-domain" title="${safeUrl}">${item.domain}</span>
-        <span class="bc-item-time">${bcFmtTime(item.ts)}</span>
-      </div>
-      <div class="bc-item-body">
-        <div class="bc-item-summary">${item.summary || item.error || ''}</div>
-        <div class="bc-item-actions">
-          <a class="bc-action-btn link" href="${safeUrl}" target="_blank" rel="noopener">🔗 Mở bài</a>
-          <button class="bc-action-btn copy" onclick="bcCopyLink('${safeUrl}')">📋 Copy link</button>
-          <button class="bc-action-btn del"  onclick="bcDelete('${item.id}')">🗑 Xoá</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function bcCopyLink(url) {
-  navigator.clipboard.writeText(url)
-    .then(() => showCopyToast('✅ Đã sao chép link!'))
-    .catch(() => { prompt('Copy link này:', url); });
-}
-
-/* ── Load lịch sử khi mở tab ── */
-async function bcInitHistory() {
-  if (BC_LOADING_HIST) return;
-  BC_LOADING_HIST = true;
-
-  // Hiện cache local tạm thời
-  const localItems = bcLsLoad();
-  if (localItems.length) {
-    BC_HISTORY = localItems;
-    bcRender();
-  }
-  bcSetStatus('⏳ Đang tải lịch sử từ server…');
-
-  try {
-    const serverItems = await bcServerGet();
-    BC_HISTORY = serverItems;
-    bcLsSave(serverItems);          // cập nhật localStorage
-    bcRender();
-    bcSetStatus(serverItems.length ? '' : '');
-  } catch(e) {
-    // Giữ dữ liệu local, báo lỗi nhẹ
-    bcSetStatus('⚠️ Không kết nối được server — đang dùng dữ liệu cục bộ', true);
-  } finally {
-    BC_LOADING_HIST = false;
-  }
-}
-
-/* ── Xoá 1 item ── */
-async function bcDelete(id) {
-  // Xoá ngay trên UI
-  BC_HISTORY = BC_HISTORY.filter(it => it.id !== id);
-  bcLsSave(BC_HISTORY);
-  bcRender();
-  // Đồng bộ server
-  try {
-    const updated = await bcServerDelete(id);
-    if (updated) { BC_HISTORY = updated; bcLsSave(updated); bcRender(); }
-  } catch(e) {
-    bcSetStatus('⚠️ Xoá trên server thất bại: ' + e.message, true);
-  }
-}
-
-/* ── Xoá tất cả ── */
-document.getElementById('bcClearBtn').addEventListener('click', async () => {
-  if (!BC_HISTORY.length) return;
-  if (!confirm('Xoá toàn bộ lịch sử tóm tắt trên server?')) return;
-  BC_HISTORY = [];
-  bcLsSave([]);
-  bcRender();
-  try {
-    await bcServerClear();
-    bcSetStatus('');
-  } catch(e) {
-    bcSetStatus('⚠️ Xoá server thất bại: ' + e.message, true);
-  }
-});
-
-/* ── Tóm tắt bài báo ── */
-async function bcDoSummarize() {
-  const urlInput = document.getElementById('bcUrlInput');
-  const url = urlInput.value.trim();
-  if (!url || !url.startsWith('http')) { urlInput.focus(); return; }
-
-  // Check duplicate
-  const dup = BC_HISTORY.find(it => it.url === url && !it.error);
-  if (dup) {
-    showCopyToast('ℹ️ Link này đã được tóm tắt rồi!');
-    urlInput.value = '';
-    return;
-  }
-
-  const btn     = document.getElementById('bcSubmitBtn');
-  const loading = document.getElementById('bcLoading');
-  btn.disabled = true;
-  loading.classList.add('show');
-  bcSetStatus('');
-
-  let newItem;
-  try {
-    // Bước 1: gọi AI tóm tắt
-    const res = await fetch('/api/summarize', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({url})
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Lỗi HTTP ' + res.status);
-
-    newItem = {
-      id:      Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-      url,
-      domain:  bcDomain(url),
-      summary: data.summary || '(Không có kết quả)',
-      ts:      Date.now()
-    };
-  } catch(e) {
-    newItem = {
-      id:     Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-      url,
-      domain: bcDomain(url),
-      error:  '⚠️ ' + e.message,
-      ts:     Date.now()
-    };
-  }
-
-  // Bước 2: Hiện ngay trên UI (optimistic)
-  BC_HISTORY.unshift(newItem);
-  bcLsSave(BC_HISTORY);
-  bcRender();
-
-  btn.disabled = false;
-  loading.classList.remove('show');
-  urlInput.value = '';
-
-  // Bước 3: Lưu lên server (không block UI)
-  try {
-    const updated = await bcServerAdd(newItem);
-    if (updated) {
-      BC_HISTORY = updated;
-      bcLsSave(updated);
-      bcRender();
-      bcSetStatus('✅ Đã lưu lên server — mọi thiết bị đều thấy');
-      setTimeout(() => bcSetStatus(''), 3000);
-    }
-  } catch(e) {
-    bcSetStatus('⚠️ Lưu server thất bại — chỉ lưu cục bộ: ' + e.message, true);
-  }
-}
-
-document.getElementById('bcSubmitBtn').addEventListener('click', bcDoSummarize);
-document.getElementById('bcUrlInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') bcDoSummarize();
-});
-document.getElementById('bcUrlInput').addEventListener('paste', () => {
-  setTimeout(() => {
-    const v = document.getElementById('bcUrlInput').value.trim();
-    if (v.startsWith('http')) bcDoSummarize();
-  }, 120);
-});
-
-/* ── Tải lịch sử khi chuyển sang tab boxchat ── */
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.tab === 'tab-boxchat') bcInitHistory();
-  });
 });
 
 /* ════════════════════════════════════════════

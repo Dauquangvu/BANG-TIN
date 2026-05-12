@@ -936,20 +936,12 @@ function currentWeekKey() {
   const yr = n.getFullYear();
   const month = n.getMonth();
   const dayOfMonth = n.getDate();
-  // Tính tuần theo thứ Hai: tuần 1 là tuần chứa ngày 1 của tháng
-  // Thứ Hai đầu tiên của tháng
+  // Tìm Thứ Hai đầu tiên của tháng
   const firstDay = new Date(yr, month, 1);
-  const firstDayDow = (firstDay.getDay() + 6) % 7; // Mon=0...Sun=6
-  // Số ngày từ thứ Hai đầu tiên đến ngày hiện tại
-  // Nếu ngày 1 là Mon(0): first Mon = ngày 1
-  // Nếu ngày 1 là Tue(1)-Sun(6): first Mon = ngày 1 + (7 - firstDayDow)
-  const firstMonday = firstDayDow === 0 ? 1 : (8 - firstDayDow);
-  let weekNum;
-  if (dayOfMonth < firstMonday) {
-    weekNum = 1; // Trước thứ Hai đầu tiên → tuần 1
-  } else {
-    weekNum = Math.floor((dayOfMonth - firstMonday) / 7) + 2;
-  }
+  const firstIso = firstDay.getDay() === 0 ? 7 : firstDay.getDay(); // CN=7, T2=1..T7=6
+  const firstMonday = firstIso === 1 ? 1 : (9 - firstIso);
+  // Tuần: T2 đầu tiên trở đi chia 7, trước T2 đầu tiên = tuần 1
+  const weekNum = dayOfMonth < firstMonday ? 1 : Math.floor((dayOfMonth - firstMonday) / 7) + 1;
   const key = `${yr}-${pad(month+1)}-W${weekNum}`;
   return DATA_WEEKS[key] ? key : allWeeks()[0];
 }

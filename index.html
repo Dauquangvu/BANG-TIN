@@ -1322,30 +1322,61 @@ function renderNews(type, items) {
 
 /* ── Load news — chỉ khi nhập đúng mật khẩu ── */
 // RSS feeds cho từng loại tin
+// Google News RSS (tiếng Việt) — không bị CORS vì dùng proxy
 const RSS_FEEDS = {
   thegioi: [
-    'https://vnexpress.net/rss/the-gioi.rss',
-    'https://tuoitre.vn/rss/the-gioi.rss'
+    'https://news.google.com/rss/search?q=thế+giới&hl=vi&gl=VN&ceid=VN:vi',
+    'https://feeds.feedburner.com/vnexpress/the-gioi',
+    'https://vnexpress.net/rss/the-gioi.rss'
   ],
   trongnuoc: [
-    'https://vnexpress.net/rss/thoi-su.rss',
-    'https://tuoitre.vn/rss/thoi-su.rss'
+    'https://news.google.com/rss/search?q=tin+tức+Việt+Nam&hl=vi&gl=VN&ceid=VN:vi',
+    'https://feeds.feedburner.com/vnexpress/thoi-su',
+    'https://vnexpress.net/rss/thoi-su.rss'
   ]
 };
 
-// Dùng rss2json.com (miễn phí, không cần backend)
+// Danh sách CORS proxy thử lần lượt
+const CORS_PROXIES = [
+  url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+];
+
+function parseRSSXML(xmlText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'application/xml');
+  const items = Array.from(doc.querySelectorAll('item')).slice(0, 8);
+  if (!items.length) throw new Error('Không có bài trong RSS');
+  return items.map(it => {
+    const title = it.querySelector('title')?.textContent || '';
+    const link  = it.querySelector('link')?.textContent || it.querySelector('guid')?.textContent || '#';
+    const pubDate = it.querySelector('pubDate')?.textContent || '';
+    const desc = (it.querySelector('description')?.textContent || '')
+                   .replace(/<[^>]*>/g,'').slice(0, 200);
+    return { title, link, pubDate, excerpt: desc };
+  });
+}
+
+async function fetchRSSWithProxy(rssUrl) {
+  for (const proxyFn of CORS_PROXIES) {
+    try {
+      const proxyUrl = proxyFn(rssUrl);
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const data = await res.json().catch(() => null);
+      // allorigins trả về { contents: "..." }
+      const xmlText = data?.contents ?? await res.text?.() ?? '';
+      if (!xmlText || xmlText.length < 100) continue;
+      const items = parseRSSXML(xmlText);
+      if (items.length) return items;
+    } catch(e) { continue; }
+  }
+  throw new Error('Tất cả proxy đều thất bại');
+}
+
 async function fetchRSS(rssUrl) {
-  const api = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl) + '&count=8';
-  const res = await fetch(api);
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  if (data.status !== 'ok') throw new Error(data.message || 'RSS error');
-  return data.items.map(it => ({
-    title: it.title,
-    link: it.link,
-    pubDate: it.pubDate,
-    excerpt: it.description ? it.description.replace(/<[^>]*>/g,'').slice(0, 200) : ''
-  }));
+  return await fetchRSSWithProxy(rssUrl);
 }
 
 async function loadNews(type, withAI) {
@@ -1362,10 +1393,14 @@ async function loadNews(type, withAI) {
     const feeds = RSS_FEEDS[type];
     // Thử feed đầu, nếu lỗi thử feed dự phòng
     let items = [];
+    let lastErr = '';
     for (const feed of feeds) {
-      try { items = await fetchRSS(feed); if (items.length) break; } catch(e) { continue; }
+      try {
+        items = await fetchRSS(feed);
+        if (items.length) break;
+      } catch(e) { lastErr = e.message; continue; }
     }
-    if (!items.length) throw new Error('Không lấy được tin từ RSS');
+    if (!items.length) throw new Error(lastErr || 'Không lấy được tin từ RSS');
     NEWS_CACHE[type] = items;
     saveNewsCache(type, items);
     renderNews(type, items);

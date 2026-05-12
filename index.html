@@ -106,40 +106,156 @@
     }
     .tabs-row2-flex .tab-btn.t2 { flex: 1; }
 
-    .ai-bubble {
-      position: fixed; bottom: 24px; right: 20px; z-index: 999;
-      width: 58px; height: 58px; border-radius: 50%;
-      background: linear-gradient(135deg, #1b5e20, #4caf50);
-      box-shadow: 0 4px 18px rgba(0,100,0,0.45);
-      border: none; cursor: pointer; font-size: 1.55rem;
-      display: flex; align-items: center; justify-content: center;
-      transition: transform .2s, box-shadow .2s;
-      animation: bubblePop .5s ease;
-    }
-    @keyframes bubblePop { 0%{transform:scale(0)} 70%{transform:scale(1.1)} 100%{transform:scale(1)} }
-    .ai-bubble:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(0,100,0,0.55); }
-    .ai-bubble-label {
-      position: absolute; bottom: 66px; right: 0;
-      background: #1b5e20; color: #fff; font-size: .72rem; font-weight: 700;
-      padding: 4px 10px; border-radius: 20px; white-space: nowrap;
-      pointer-events: none; opacity: 0; transition: opacity .2s;
-    }
-    .ai-bubble:hover .ai-bubble-label { opacity: 1; }
 
-    /* ── PASSWORD MODAL ── */
-    .pwd-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:1100; align-items:center; justify-content:center; }
-    .pwd-modal-bg.open { display:flex; }
-    .pwd-modal { background:var(--cream); border-radius:14px; padding:24px 24px 20px; width:90%; max-width:360px; box-shadow:0 8px 40px rgba(0,0,0,.4); }
-    .pwd-modal h3 { font-size:1rem; color:var(--red-dk); margin-bottom:6px; }
-    .pwd-modal p  { font-size:.82rem; color:var(--muted); margin-bottom:14px; line-height:1.5; }
-    .pwd-input { width:100%; padding:10px 14px; border:2px solid var(--border); border-radius:10px; font-size:1rem; background:#fff8e8; outline:none; color:var(--text); margin-bottom:14px; box-sizing:border-box; letter-spacing:.15em; }
-    .pwd-input:focus { border-color:var(--gold); }
-    .pwd-btns { display:flex; gap:8px; }
-    .pwd-btns button { flex:1; padding:10px; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-size:.88rem; }
-    .pwd-ok { background:var(--red); color:#fff; }
-    .pwd-ok:hover { background:var(--red-dk); }
-    .pwd-cancel { background:#e0e0e0; color:#333; }
-    .pwd-err { font-size:.8rem; color:#c62828; margin-top:-8px; margin-bottom:8px; display:none; }
+    /* ── MAIN ── */
+    main {
+      width: 100%;
+      max-width: 860px;
+      padding: 0 16px 44px;
+      flex: 1;
+    }
+
+    /* ── PANELS ── */
+    .panel { display: none; padding-top: 18px; }
+    .panel.active { display: block; animation: fadeIn 0.35s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+    /* ── DATE NAV — compact ── */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      background: var(--gold);
+      color: var(--red-dk);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .nav-btn.arrow { padding: 6px 10px; font-size: 1rem; }
+    .nav-btn:hover  { background: var(--gold-lt); transform: translateY(-1px); }
+    .nav-btn:active { transform: none; }
+    .nav-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+    .nav-btn.blue { background: #5dade2; color: #fff; }
+    .nav-btn.blue:hover { background: #85c1e9; }
+
+    .date-display {
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(212,168,67,0.5);
+      border-radius: 8px;
+      padding: 6px 14px;
+      color: var(--gold-lt);
+      font-weight: 700;
+      font-size: 0.88rem;
+      min-width: 150px;
+      text-align: center;
+    }
+    .date-display.blue {
+      border-color: rgba(93,173,226,0.5);
+      color: var(--blue-lt);
+    }
+    input[type="date"] {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      color: var(--gold-lt);
+      font-size: 0.82rem;
+      padding: 6px 8px;
+      outline: none;
+      cursor: pointer;
+      width: 130px;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) sepia(1) saturate(3); }
+
+    /* ── AI MODAL ── */
+    .ai-modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 1000;
+      align-items: flex-end; justify-content: center;
+    }
+    .ai-modal-bg.open { display: flex; animation: slideUp .3s ease; }
+    @keyframes slideUp { from{transform:translateY(60px);opacity:0} to{transform:none;opacity:1} }
+    .ai-modal {
+      background: var(--cream); width: 100%; max-width: 860px;
+      border-radius: 18px 18px 0 0; padding: 20px 20px 28px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.35);
+    }
+    .ai-modal-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .ai-modal-title { font-size: 1rem; font-weight: 800; color: var(--red-dk); }
+    .ai-close-btn {
+      background: none; border: none; font-size: 1.4rem; cursor: pointer;
+      color: var(--muted); line-height: 1; padding: 2px 6px;
+    }
+    .ai-modal-sub { font-size: .8rem; color: var(--muted); margin-bottom: 12px; }
+    .ai-url-row { display: flex; gap: 8px; }
+    .ai-url-input {
+      flex: 1; padding: 10px 14px; border: 2px solid var(--border);
+      border-radius: 10px; font-size: .9rem; background: #fff8e8;
+      outline: none; color: var(--text);
+    }
+    .ai-url-input:focus { border-color: var(--gold); }
+    .ai-submit-btn {
+      background: var(--red); color: #fff; border: none;
+      border-radius: 10px; padding: 10px 18px; font-weight: 700;
+      font-size: .88rem; cursor: pointer; white-space: nowrap;
+      transition: background .2s;
+    }
+    .ai-submit-btn:hover { background: var(--red-dk); }
+    .ai-submit-btn:disabled { opacity: .5; cursor: default; }
+    .ai-result {
+      margin-top: 16px; padding: 14px 16px;
+      background: #f1f8e9; border-left: 4px solid #4caf50;
+      border-radius: 0 10px 10px 0; font-size: .93rem;
+      line-height: 1.82; color: #1a3300; display: none;
+    }
+    .ai-result.show { display: block; animation: fadeIn .3s; }
+    .ai-result-title {
+      font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+      color: #1b5e20; text-transform: uppercase; margin-bottom: 8px;
+    }
+    .ai-loading { text-align: center; padding: 18px; color: var(--muted); display: none; }
+    .ai-loading.show { display: block; }
+    .ai-error { background: #fdecea; border-left-color: #e53935; color: #b71c1c; }
+
+
+    /* ── AI PASSWORD MODAL ── */
+    .pwd-modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6); z-index: 1100;
+      align-items: center; justify-content: center;
+    }
+    .pwd-modal-bg.open { display: flex; }
+    .pwd-modal {
+      background: var(--cream); border-radius: 14px; padding: 24px 24px 20px;
+      width: 90%; max-width: 360px; box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+    .pwd-modal h3 { font-size: 1rem; color: var(--red-dk); margin-bottom: 6px; }
+    .pwd-modal p  { font-size: .82rem; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+    .pwd-input {
+      width: 100%; padding: 10px 14px; border: 2px solid var(--border);
+      border-radius: 10px; font-size: 1rem; background: #fff8e8;
+      outline: none; color: var(--text); margin-bottom: 14px;
+      letter-spacing: .15em;
+    }
+    .pwd-input:focus { border-color: var(--gold); }
+    .pwd-btns { display: flex; gap: 8px; }
+    .pwd-btns button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: .88rem; }
+    .pwd-ok  { background: var(--red); color: #fff; }
+    .pwd-ok:hover { background: var(--red-dk); }
+    .pwd-cancel { background: #e0e0e0; color: #333; }
+    .pwd-err { font-size: .8rem; color: #c62828; margin-top: 6px; display: none; }
 
     /* ── CHIP ROWS ── */
     .chip-row {
@@ -395,7 +511,12 @@
       .date-nav { gap: 5px; }
       .header-title h1 { letter-spacing: 0.04em; }
     }
-  </style>
+    /* ── AI BUBBLE (ChatGPT link) ── */
+    .ai-bubble { position:fixed; bottom:24px; right:20px; width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#1a6b3a,#0d4a28); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; box-shadow:0 4px 18px rgba(0,100,0,0.45); cursor:pointer; z-index:900; text-decoration:none; border:none; }
+    .ai-bubble:hover { transform:scale(1.1); box-shadow:0 6px 24px rgba(0,100,0,0.55); }
+    .ai-bubble-label { position:absolute; right:60px; background:#1a6b3a; color:#fff; padding:5px 10px; border-radius:8px; font-size:.75rem; font-weight:600; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .2s; }
+    .ai-bubble:hover .ai-bubble-label { opacity:1; }
+</style>
 </head>
 <body>
 

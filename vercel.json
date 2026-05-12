@@ -1,13 +1,7 @@
 {
   "functions": {
-    "api/summarize.js": {
-      "maxDuration": 30
-    },
     "api/news.js": {
       "maxDuration": 30
-    },
-    "api/chat-history.js": {
-      "maxDuration": 10
     }
   }
 }

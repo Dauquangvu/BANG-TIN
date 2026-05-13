@@ -1063,9 +1063,7 @@ function showCopyToast(msg) {
 }
 
 function copyLink(url) {
-  const prompt_text = `${url}\n\nTóm tắt tin tức thành 1 đoạn 50–100 từ theo mẫu:
-“Ngày..., tại..., ...”
-Yêu cầu: có tiêu đề, súc tích, logic, đúng trọng tâm, văn phong khoa học.`;
+  const prompt_text = `${url}\n\nHãy tóm tắt tin này 150 từ, có Mục đề, thời gian, nội dung. Yêu cầu: Logic, khoa học`;
   navigator.clipboard.writeText(prompt_text)
     .then(() => showCopyToast('✅ Đã sao chép link + prompt!'))
     .catch(() => { prompt('Copy nội dung này:', prompt_text); });
@@ -1119,18 +1117,21 @@ function renderNews(type, items) {
 }
 
 /* ── Load news — gọi /api/news (Vercel serverless) ── */
-async function loadNews(type) {
+async function loadNews(type, forceRefresh) {
   const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
   const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
 
-  document.getElementById(timeId).textContent = '⏳ Đang tải tin mới nhất…';
+  document.getElementById(timeId).textContent = forceRefresh ? '🤖 Đang tải tin mới nhất…' : '⏳ Đang tải…';
   document.getElementById(listId).innerHTML = [0,1,2].map(() =>
     '<div class="news-skeleton"><div class="skel-line" style="width:80%"></div>' +
     '<div class="skel-line" style="width:60%"></div><div class="skel-line" style="width:90%"></div></div>'
   ).join('');
 
   try {
-    const res = await fetch('/api/news?type=' + type);
+    const url = forceRefresh
+      ? `/api/news?type=${type}&pwd=${NEWS_PWD}`
+      : `/api/news?type=${type}`;
+    const res = await fetch(url);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'HTTP ' + res.status);
@@ -1140,13 +1141,15 @@ async function loadNews(type) {
     NEWS_CACHE[type] = data.items;
     saveNewsCache(type, data.items);
     renderNews(type, data.items);
-    document.getElementById(timeId).textContent = '✅ Cập nhật lúc ' + new Date().toLocaleTimeString('vi-VN');
+    const updatedAt = data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString('vi-VN') : '';
+    document.getElementById(timeId).textContent =
+      (data.fromCache ? '📦 Cache ' : '✅ Mới ') + updatedAt;
   } catch(e) {
     console.warn('News failed:', e.message);
     const cached = loadNewsCache(type);
     if (cached) {
       renderNews(type, cached);
-      document.getElementById(timeId).textContent = '⚠️ Lỗi cập nhật — hiện tin cũ';
+      document.getElementById(timeId).textContent = '⚠️ Dùng cache cũ — ' + e.message;
     } else {
       document.getElementById(timeId).textContent = '⚠️ Lỗi tải tin';
       document.getElementById(listId).innerHTML =
@@ -1181,9 +1184,9 @@ document.getElementById('pwdOk').addEventListener('click', () => {
     errEl.style.display = 'block'; return;
   }
   document.getElementById('pwdModalBg').classList.remove('open');
-  // Nhập đúng → tải CẢ HAI cùng lúc
-  loadNews('thegioi');
-  loadNews('trongnuoc');
+  // Nhập đúng → force refresh cả hai, gửi pwd lên server
+  loadNews('thegioi', true);
+  loadNews('trongnuoc', true);
 });
 document.getElementById('pwdInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('pwdOk').click();
@@ -6129,6 +6132,13 @@ Promise.resolve([_EMBEDDED_BAC, _EMBEDDED_QA, _EMBEDDED_WEEKS]).then(([bac, qa, 
 
   // Init Tab 3
   goLuat(currentWeekKey());
+
+  // Tự động tải tin khi vào trang — mọi thiết bị đều thấy tin từ server cache
+  ['thegioi','trongnuoc'].forEach(type => {
+    const cached = loadNewsCache(type);
+    if (cached) renderNews(type, cached); // hiện ngay cache local nếu có
+    loadNews(type, false); // tải từ server (không cần mật khẩu, dùng Vercel cache)
+  });
 
 }).catch(err => {
   console.error(err);

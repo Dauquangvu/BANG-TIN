@@ -1049,7 +1049,7 @@ function showCopyToast(msg) {
 }
 
 function copyLink(url) {
-  const prompt_text = `${url}\n\nHãy tóm tắt tin này 150 từ, có Mục đề, thời gian, nội dung. Yêu cầu: Logic, khoa học`;
+  const prompt_text = `${url}\n\nTóm tắt tin tức thành 1 đoạn 50–100 từ theo mẫu: “Ngày..., tại..., ...” Yêu cầu: có tiêu đề, súc tích, logic, đúng trọng tâm, văn phong khoa học.`;
   navigator.clipboard.writeText(prompt_text)
     .then(() => showCopyToast('✅ Đã sao chép link + prompt!'))
     .catch(() => { prompt('Copy nội dung này:', prompt_text); });

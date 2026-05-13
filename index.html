@@ -478,7 +478,6 @@
     .view-toggle button.active { background: #2e7d32; color: #fff; }
     .mucdich-body { padding: 20px 22px 24px; }
     .mucdich-full { font-size: .95rem; line-height: 1.85; color: var(--text); white-space: pre-wrap; }
-    .mucdich-sum  { font-size: .95rem; line-height: 1.85; color: var(--text); }
     .sum-item {
       display: flex; gap: 10px; align-items: flex-start;
       padding: 10px 14px; margin-bottom: 8px;
@@ -661,7 +660,6 @@
       </div>
       <div class="view-toggle">
         <button id="btnFull" class="active" onclick="switchView('full')">📄 Toàn văn</button>
-        <button id="btnSum"               onclick="switchView('sum')">📌 Tóm tắt ý chính</button>
       </div>
       <div class="mucdich-body">
         <!-- Full text -->
@@ -673,16 +671,6 @@
 - Xây dựng Chi bộ Đại đội hoàn thành xuất sắc nhiệm vụ; 100% cán bộ, đảng viên hoàn thành nhiệm vụ trở lên, 90% hoàn thành tốt và xuất sắc; kiểm tra, giám sát 01 – 02 đảng viên, 100% đảng viên có dấu hiệu vi phạm; kết nạp 01 - 02 quần chúng ưu tú vào Đảng; Chi đoàn hoàn thành tốt và xuất sắc nhiệm vụ.
 
 Năm 2026, cán bộ chiến sĩ toàn Đại đội nêu cao quyết tâm, nội bộ đoàn kết đồng lòng, thống nhất ý chí và hành động, vượt mọi khó khăn thách thức, phấn đấu được tặng thưởng danh hiệu Đơn vị Quyết thắng, nhiều tập thể và cá nhân có thành tích tốt hơn năm 2025.</div>
-        <!-- Summary -->
-        <div id="mucdich-sum" class="mucdich-sum hidden">
-          <div class="sum-item"><div class="sum-icon">🛡️</div><div class="sum-text"><strong>SSCĐ &amp; An ninh:</strong> Duy trì nghiêm chế độ SSCĐ, nắm xử trí kịp thời mọi tình huống, không bị động bất ngờ; sẵn sàng cứu hộ, khắc phục thiên tai.</div></div>
-          <div class="sum-item"><div class="sum-icon">🎯</div><div class="sum-text"><strong>Huấn luyện:</strong> 100% cán bộ đạt yêu cầu theo phân cấp; 85% trở lên khá, giỏi; 100% bài bắn BB &amp; HL đạt khá, giỏi. Diễn tập giỏi kỹ thuật, khá chiến thuật, an toàn tuyệt đối.</div></div>
-          <div class="sum-item"><div class="sum-icon">📊</div><div class="sum-text"><strong>Chính trị:</strong> Kiểm tra nhận thức chính trị 100% đạt, &gt;78% khá giỏi; cán bộ chủ trì &amp; cán bộ chính trị 100% khá, giỏi.</div></div>
-          <div class="sum-item"><div class="sum-icon">⚖️</div><div class="sum-text"><strong>Kỷ luật &amp; Số hoá:</strong> Không vi phạm kỷ luật nghiêm trọng; 100% cán bộ chiến sĩ sử dụng thành thạo nền tảng số &amp; bảo vệ bản thân trên môi trường số.</div></div>
-          <div class="sum-item"><div class="sum-icon">🏥</div><div class="sum-text"><strong>Hậu cần – Kỹ thuật:</strong> Quân số khoẻ ≥98,95%; không dịch bệnh; an toàn tuyệt đối kho tàng VKTB; duy trì Kbđ = 1.</div></div>
-          <div class="sum-item"><div class="sum-icon">🔴</div><div class="sum-text"><strong>Đảng – Đoàn:</strong> Chi bộ HTXSNV; 90% đảng viên HTT &amp; HTXS; kết nạp 1-2 đảng viên mới; Chi đoàn HTXSNV.</div></div>
-          <div class="sum-goal">🏆 MỤC TIÊU 2026: Đơn vị Quyết thắng — Nhiều tập thể &amp; cá nhân vượt thành tích năm 2025</div>
-        </div>
       </div>
     </div>
   </div>
@@ -1007,9 +995,7 @@ document.getElementById('luatNow').addEventListener('click',  ()=>goLuat(current
 ════════════════════════════════════════════ */
 function switchView(mode) {
   document.getElementById('mucdich-full').classList.toggle('hidden', mode !== 'full');
-  document.getElementById('mucdich-sum').classList.toggle('hidden',  mode !== 'sum');
   document.getElementById('btnFull').classList.toggle('active', mode === 'full');
-  document.getElementById('btnSum').classList.toggle('active',  mode === 'sum');
 }
 
 /* ════════════════════════════════════════════

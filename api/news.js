@@ -1,6 +1,6 @@
 // api/news.js — Vercel Serverless Function
 // GET /api/news?type=thegioi|trongnuoc            → đọc cache dùng chung (mọi thiết bị thấy giống nhau)
-// GET /api/news?type=thegioi|trongnuoc&pwd=324     → ép tải tin mới + tóm tắt AI (nếu có ANTHROPIC_API_KEY)
+// GET /api/news?type=thegioi|trongnuoc&pwd=324     → ép tải tin mới + AI đọc toàn văn, tự chọn 2 tin tốt nhất + tóm tắt
 //
 // Nguồn tin: RSS VnExpress (ổn định, không tốn phí, không phụ thuộc bên thứ 3).
 // Cache dùng chung mọi thiết bị: Vercel KV (cùng ENV với api/chat-history.js — KV_REST_API_URL, KV_REST_API_TOKEN).
@@ -8,7 +8,7 @@
 //
 // ENV tùy chọn:
 //   KV_REST_API_URL, KV_REST_API_TOKEN  → bật cache dùng chung mọi thiết bị (khuyến nghị)
-//   ANTHROPIC_API_KEY                   → bật tóm tắt AI (chỉ chạy khi force-refresh, tiết kiệm chi phí)
+//   ANTHROPIC_API_KEY                   → bật AI đọc + chọn + tóm tắt (chỉ chạy khi force-refresh, tiết kiệm chi phí)
 //   AI_MODEL                            → mặc định 'claude-haiku-4-5-20251001'
 //   NEWS_PWD                            → mặc định '324' (phải khớp NEWS_PWD trong index.html)
 
@@ -16,7 +16,8 @@ const RSS = {
   thegioi:   'https://vnexpress.net/rss/the-gioi.rss',
   trongnuoc: 'https://vnexpress.net/rss/thoi-su.rss',
 };
-const MAX_ITEMS   = 2;
+const DISPLAY_ITEMS   = 2;  // số tin hiện ra cho người xem
+const CANDIDATE_ITEMS = 6;  // số tin ứng viên đưa AI đọc để chọn ra DISPLAY_ITEMS tin tốt nhất
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 phút
 const KV_PREFIX = 'bangtin_news_';
 
@@ -32,11 +33,11 @@ function strip(h) {
     .replace(/\s+/g, ' ').trim();
 }
 
-function parseRSS(xml) {
+function parseRSS(xml, limit) {
   const items = [];
   const re = /<item[^>]*>([\s\S]*?)<\/item>/g;
   let m;
-  while ((m = re.exec(xml)) !== null && items.length < MAX_ITEMS) {
+  while ((m = re.exec(xml)) !== null && items.length < limit) {
     const b = m[1];
     const get = (tag) => {
       const r = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, 'i');
@@ -105,14 +106,14 @@ async function fetchArticleText(url) {
         .filter(l => !l.startsWith('Title:') && !l.startsWith('URL Source:') &&
                      !l.startsWith('Published Time:') && !l.startsWith('Markdown Content:'))
         .join('\n').trim();
-      if (cleaned.length > 200) return cleaned.slice(0, 5000);
+      if (cleaned.length > 200) return cleaned.slice(0, 4000);
     }
   } catch (e) { /* rơi xuống fallback */ }
 
   // 2) Fallback — tải HTML trực tiếp rồi bóc chữ thô
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 9000);
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
@@ -133,23 +134,47 @@ async function fetchArticleText(url) {
       .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
       .replace(/\s{2,}/g, ' ').trim();
-    return text.length > 200 ? text.slice(0, 5000) : null;
+    return text.length > 200 ? text.slice(0, 4000) : null;
   } catch (e) {
     return null;
   }
 }
 
-// ── Tóm tắt AI (tuỳ chọn, chỉ gọi khi force-refresh) — đọc TOÀN VĂN bài báo trước khi tóm tắt ──
-async function aiSummarize(items, apiKey, model) {
-  // Tải toàn văn từng bài song song; bài nào tải lỗi thì dùng excerpt RSS làm dự phòng
-  const fullTexts = await Promise.all(items.map(it => fetchArticleText(it.link).catch(() => null)));
+function extractJsonArray(text) {
+  const cleaned = text.replace(/```json|```/g, '').trim();
+  try { return JSON.parse(cleaned); } catch (e) {}
+  const m = cleaned.match(/\[[\s\S]*\]/);
+  if (m) {
+    try { return JSON.parse(m[0]); } catch (e) {}
+  }
+  throw new Error('AI trả về không đúng định dạng JSON: ' + cleaned.slice(0, 150));
+}
 
-  const prompt = items
+// ── AI đọc toàn văn các tin ứng viên, TỰ CHỌN ra DISPLAY_ITEMS tin tốt nhất
+//    (ưu tiên mới + có đủ ngày/địa điểm rõ ràng) rồi tóm tắt theo đúng mẫu 2 phần ──
+async function aiSelectAndSummarize(candidates, apiKey, model) {
+  const fullTexts = await Promise.all(candidates.map(it => fetchArticleText(it.link).catch(() => null)));
+
+  const prompt = candidates
     .map((it, i) => {
       const body = fullTexts[i] || it.excerpt || '(không có nội dung)';
-      return `BÀI ${i + 1}:\nTIÊU ĐỀ: ${it.title}\nNỘI DUNG:\n${body}`;
+      return `BÀI SỐ ${i}:\nTIÊU ĐỀ: ${it.title}\nNGÀY ĐĂNG (RSS): ${it.pubDate || 'không rõ'}\nNỘI DUNG:\n${body}`;
     })
     .join('\n\n---\n\n');
+
+  const instruction = `Dưới đây là ${candidates.length} bài báo, đánh số từ 0 đến ${candidates.length - 1}.
+
+BƯỚC 1 — CHỌN: Chọn ra ĐÚNG ${DISPLAY_ITEMS} bài PHÙ HỢP NHẤT theo tiêu chí: vừa MỚI (ưu tiên bài có ngày đăng gần nhất) VỪA có đầy đủ THÔNG TIN NGÀY THÁNG CỤ THỂ và ĐỊA ĐIỂM CỤ THỂ ngay trong nội dung bài. Loại các bài mơ hồ, chung chung, thiếu ngày/địa điểm rõ ràng nếu còn bài khác đáp ứng tốt hơn.
+
+BƯỚC 2 — TÓM TẮT: Với mỗi bài đã chọn, viết tóm tắt theo ĐÚNG cấu trúc gồm 2 phần, cách nhau bằng ký tự xuống dòng \\n:
+Phần 1: TIÊU ĐỀ BÀI VIẾT, VIẾT IN HOA TOÀN BỘ (không thêm số thứ tự).
+Phần 2: MỘT đoạn văn liền mạch (không xuống dòng, không tách câu riêng), khoảng 60-90 từ tiếng Việt, văn phong báo chí súc tích, BẮT BUỘC bắt đầu bằng cụm "Ngày [ngày/tháng cụ thể lấy đúng trong bài; nếu bài thật sự không nêu ngày thì dùng ngày đăng RSS đã cho ở trên, viết dạng d/m], tại [địa điểm cụ thể lấy đúng trong bài]," rồi tiếp tục kể lại đầy đủ diễn biến, nội dung chính, đúng trọng tâm. TUYỆT ĐỐI không được để trống bằng dấu ngoặc vuông hay ghi "không có/không rõ" — luôn phải điền một mốc thời gian và địa điểm cụ thể suy ra được từ bài.
+
+Ví dụ đúng định dạng phần 2 (chỉ để tham khảo văn phong, không copy nội dung): "Ngày 7/9, tại phường Phước Tân, Đồng Nai, ôtô 7 chỗ lưu thông hướng Đồng Nai - TP HCM khi qua đoạn cao tốc đang sửa chữa đã tông biển cảnh báo, cọc tiêu rồi lao xuống phần đường bị đào thấp, sập hố ga. Vụ việc khiến hai bánh xe hư hỏng nặng, không gây thương vong. Cơ quan chức năng đang kiểm tra việc bố trí biển cảnh báo."
+
+Trả về DUY NHẤT 1 JSON array gồm đúng ${DISPLAY_ITEMS} phần tử, mỗi phần tử là object dạng {"index": <số thứ tự bài đã chọn ở trên>, "summary": "<TIÊU ĐỀ IN HOA>\\n<đoạn văn phần 2>"}. BẮT BUỘC: không thêm bất kỳ chữ nào khác ngoài JSON, không giải thích, không xin lỗi, không từ chối, không dùng markdown — kể cả khi nội dung nhạy cảm hay khó tóm tắt thì vẫn phải chọn và tóm tắt khách quan theo đúng cấu trúc trên.
+
+${prompt}`;
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -160,16 +185,8 @@ async function aiSummarize(items, apiKey, model) {
     },
     body: JSON.stringify({
       model,
-      max_tokens: 1500,
-      messages: [{
-        role: 'user',
-        content: `Đọc kỹ TOÀN VĂN mỗi bài báo sau. Với MỖI bài, viết lại phần tóm tắt theo ĐÚNG cấu trúc 3 dòng sau, mỗi dòng cách nhau bằng ký tự xuống dòng \\n (không thêm tiêu đề phụ, không đánh số dòng):
-Dòng 1: TIÊU ĐỀ BÀI VIẾT, VIẾT IN HOA TOÀN BỘ.
-Dòng 2: Bắt đầu bằng "Ngày [ngày/tháng/năm cụ thể lấy đúng trong bài, nếu không có ngày cụ thể thì dùng ngày đăng bài]" rồi đến ", tại [địa điểm chính của sự việc — bỏ qua phần này nếu bài không nêu rõ địa điểm]" rồi nêu NGẮN GỌN trong 1 câu nội dung chính, trọng tâm nhất của bài.
-Dòng 3: Đoạn tóm tắt đầy đủ nội dung bài báo, khoảng 60-80 từ tiếng Việt, súc tích, đúng trọng tâm, không lặp lại y nguyên dòng 2.
-
-Trả về DUY NHẤT 1 JSON array gồm ${items.length} chuỗi theo thứ tự (mỗi chuỗi gồm đủ 3 dòng nối bằng \\n). BẮT BUỘC: không thêm bất kỳ chữ nào khác ngoài JSON, không giải thích, không xin lỗi, không từ chối, không dùng markdown — kể cả khi nội dung bài báo nhạy cảm hay khó tóm tắt thì vẫn phải tóm tắt khách quan theo đúng cấu trúc trên.\n\n${prompt}`,
-      }],
+      max_tokens: 1200,
+      messages: [{ role: 'user', content: instruction }],
     }),
   });
   if (!resp.ok) {
@@ -178,17 +195,7 @@ Trả về DUY NHẤT 1 JSON array gồm ${items.length} chuỗi theo thứ tự
   }
   const data = await resp.json();
   const text = (data.content || []).find((b) => b.type === 'text')?.text || '[]';
-  const cleaned = text.replace(/```json|```/g, '').trim();
-  try {
-    return JSON.parse(cleaned);
-  } catch (e) {
-    // AI lỡ thêm chữ thừa trước/sau JSON → tự tách phần mảng [ ... ] ra rồi thử lại
-    const m = cleaned.match(/\[[\s\S]*\]/);
-    if (m) {
-      try { return JSON.parse(m[0]); } catch (e2) { /* rơi xuống throw bên dưới */ }
-    }
-    throw new Error('AI trả về không đúng định dạng JSON: ' + cleaned.slice(0, 150));
-  }
+  return extractJsonArray(text);
 }
 
 module.exports = async function handler(req, res) {
@@ -220,13 +227,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // 2) Tải RSS mới
-  let items;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const willUseAI = forceRefresh && !!apiKey;
+
+  // 2) Tải RSS mới — lấy nhiều tin ứng viên hơn khi sắp dùng AI để chọn lọc
+  let candidates;
   try {
     const rssRes = await fetch(RSS[type], { headers: { 'User-Agent': 'BangTin/2.0' } });
     if (!rssRes.ok) throw new Error('RSS HTTP ' + rssRes.status);
-    items = parseRSS(await rssRes.text());
-    if (!items.length) throw new Error('RSS không có bài viết nào');
+    candidates = parseRSS(await rssRes.text(), willUseAI ? CANDIDATE_ITEMS : DISPLAY_ITEMS);
+    if (!candidates.length) throw new Error('RSS không có bài viết nào');
   } catch (e) {
     // RSS lỗi → dùng lại cache cũ (kể cả hết hạn) nếu có, để không "trắng trang"
     const stale = await cacheGet(type).catch(() => null);
@@ -241,19 +251,29 @@ module.exports = async function handler(req, res) {
     return res.status(502).json({ error: 'Không tải được tin RSS: ' + e.message });
   }
 
-  // 3) Tóm tắt AI — chỉ khi force-refresh (nhập đúng mật khẩu) VÀ có ANTHROPIC_API_KEY
+  // 3) AI đọc toàn văn + tự chọn DISPLAY_ITEMS tin tốt nhất + tóm tắt
+  //    (chỉ chạy khi force-refresh và có ANTHROPIC_API_KEY)
+  let items = candidates.slice(0, DISPLAY_ITEMS); // mặc định: lấy top tin mới nhất, chưa có AI
   let aiUsed = false;
   let aiError = null;
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (forceRefresh && apiKey) {
+
+  if (willUseAI) {
     try {
       const model = process.env.AI_MODEL || 'claude-haiku-4-5-20251001';
-      const sums = await aiSummarize(items, apiKey, model);
-      items.forEach((it, i) => { if (sums[i]) it.summary = sums[i]; });
+      const selections = await aiSelectAndSummarize(candidates, apiKey, model);
+      const picked = selections
+        .map(sel => {
+          const cand = candidates[sel.index];
+          return cand ? { ...cand, summary: sel.summary } : null;
+        })
+        .filter(Boolean);
+      if (!picked.length) throw new Error('AI không chọn được bài phù hợp');
+      items = picked;
       aiUsed = true;
     } catch (e) {
-      console.warn('[news] AI summarize skip:', e.message);
+      console.warn('[news] AI select/summarize skip:', e.message);
       aiError = e.message.slice(0, 200);
+      // items vẫn giữ giá trị mặc định (top tin mới nhất, không có AI) — không để trắng trang
     }
   } else if (forceRefresh && !apiKey) {
     aiError = 'Chưa cấu hình ANTHROPIC_API_KEY trên Vercel';

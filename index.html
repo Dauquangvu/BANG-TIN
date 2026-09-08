@@ -694,7 +694,14 @@
       <button class="news-reload" onclick="reloadNews('thegioi')">🔄 Làm mới / AI tóm tắt</button>
     </div>
     <div class="news-list" id="listTheGioi">
-      <div class="no-data"><div class="nd-icon">📰</div><p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>
+      <div class="no-data">
+        <div class="nd-icon">🔒</div>
+        <p>Nhập mật khẩu để xem tin tức.</p>
+        <button onclick="unlockNews()"
+          style="margin-top:10px;font-size:.85rem;font-weight:700;background:#e8f4ff;color:var(--blue);border:1px solid #aed6f1;border-radius:20px;padding:6px 18px;cursor:pointer">
+          🔒 Nhập mật khẩu để xem tin
+        </button>
+      </div>
     </div>
   </div>
 
@@ -705,7 +712,14 @@
       <button class="news-reload" onclick="reloadNews('trongnuoc')">🔄 Làm mới / AI tóm tắt</button>
     </div>
     <div class="news-list" id="listTrongNuoc">
-      <div class="no-data"><div class="nd-icon">📰</div><p>Nhấn nút <strong>🔄 Làm mới / AI tóm tắt</strong> bên trên<br>và nhập mật khẩu để tải tin tức.</p></div>
+      <div class="no-data">
+        <div class="nd-icon">🔒</div>
+        <p>Nhập mật khẩu để xem tin tức.</p>
+        <button onclick="unlockNews()"
+          style="margin-top:10px;font-size:.85rem;font-weight:700;background:#e8f4ff;color:var(--blue);border:1px solid #aed6f1;border-radius:20px;padding:6px 18px;cursor:pointer">
+          🔒 Nhập mật khẩu để xem tin
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1312,10 +1326,24 @@ async function loadNews(type, forceRefresh) {
   }
 }
 
-/* ── Mật khẩu 1 lần → tải cả 2 mục tin ── */
+/* ── Mật khẩu: 2 chế độ dùng chung 1 modal ──
+   - 'unlock'  → mở khoá xem tin (tải bình thường từ cache/RSS, KHÔNG tốn AI)
+   - 'refresh' → làm mới + tóm tắt AI (chỉ chạy khi bấm nút "Làm mới / AI tóm tắt")
+*/
 const NEWS_PWD = '324'; // ← đổi mật khẩu tại đây
+const NEWS_UNLOCK_KEY = 'news_unlocked_session';
+let pwdModalMode = 'refresh';
 
 function reloadNews(type) {
+  pwdModalMode = 'refresh';
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('pwdErr').style.display = 'none';
+  document.getElementById('pwdModalBg').classList.add('open');
+  setTimeout(() => document.getElementById('pwdInput').focus(), 100);
+}
+
+function unlockNews() {
+  pwdModalMode = 'unlock';
   document.getElementById('pwdInput').value = '';
   document.getElementById('pwdErr').style.display = 'none';
   document.getElementById('pwdModalBg').classList.add('open');
@@ -1337,9 +1365,17 @@ document.getElementById('pwdOk').addEventListener('click', () => {
     errEl.style.display = 'block'; return;
   }
   document.getElementById('pwdModalBg').classList.remove('open');
-  // Nhập đúng → force refresh cả hai, gửi pwd lên server
-  loadNews('thegioi', true);
-  loadNews('trongnuoc', true);
+  if (pwdModalMode === 'unlock') {
+    // Mở khoá cho cả phiên làm việc — không cần nhập lại khi chuyển tab
+    try { sessionStorage.setItem(NEWS_UNLOCK_KEY, '1'); } catch(e) {}
+    loadNews('thegioi', false);
+    loadNews('trongnuoc', false);
+  } else {
+    // Làm mới + tóm tắt AI — luôn cần đúng mật khẩu mỗi lần
+    try { sessionStorage.setItem(NEWS_UNLOCK_KEY, '1'); } catch(e) {}
+    loadNews('thegioi', true);
+    loadNews('trongnuoc', true);
+  }
 });
 document.getElementById('pwdInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('pwdOk').click();
@@ -7944,12 +7980,17 @@ Promise.resolve([_EMBEDDED_BAC, _EMBEDDED_QA, _EMBEDDED_WEEKS]).then(([bac, qa, 
   // Init Tab — Tin Đơn Vị
   goDonvi(currentWeekKey());
 
-  // Tự động tải tin khi vào trang — mọi thiết bị đều thấy tin từ server cache
-  ['thegioi','trongnuoc'].forEach(type => {
-    const cached = loadNewsCache(type);
-    if (cached) renderNews(type, cached); // hiện ngay cache local nếu có
-    loadNews(type, false); // tải từ server (không cần mật khẩu, dùng Vercel cache)
-  });
+  // Tin Thế Giới / Tin Trong Nước — chỉ tải khi phiên này đã nhập đúng mật khẩu
+  // (bấm "🔒 Nhập mật khẩu để xem tin" hoặc "🔄 Làm mới / AI tóm tắt")
+  try {
+    if (sessionStorage.getItem(NEWS_UNLOCK_KEY) === '1') {
+      ['thegioi','trongnuoc'].forEach(type => {
+        const cached = loadNewsCache(type);
+        if (cached) renderNews(type, cached); // hiện ngay cache local nếu có
+        loadNews(type, false);
+      });
+    }
+  } catch(e) {}
 
 }).catch(err => {
   console.error(err);

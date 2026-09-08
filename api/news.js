@@ -163,7 +163,12 @@ async function aiSummarize(items, apiKey, model) {
       max_tokens: 1500,
       messages: [{
         role: 'user',
-        content: `Đọc kỹ TOÀN VĂN mỗi bài báo sau và tóm tắt lại bằng 4-5 câu tiếng Việt đầy đủ ý chính, súc tích, đúng trọng tâm (không chỉ nhắc lại câu mở đầu). Trả về đúng 1 JSON array gồm ${items.length} chuỗi theo thứ tự, không thêm chữ nào khác ngoài JSON, không dùng markdown.\n\n${prompt}`,
+        content: `Đọc kỹ TOÀN VĂN mỗi bài báo sau. Với MỖI bài, viết lại phần tóm tắt theo ĐÚNG cấu trúc 3 dòng sau, mỗi dòng cách nhau bằng ký tự xuống dòng \\n (không thêm tiêu đề phụ, không đánh số dòng):
+Dòng 1: TIÊU ĐỀ BÀI VIẾT, VIẾT IN HOA TOÀN BỘ.
+Dòng 2: Bắt đầu bằng "Ngày [ngày/tháng/năm cụ thể lấy đúng trong bài, nếu không có ngày cụ thể thì dùng ngày đăng bài]" rồi đến ", tại [địa điểm chính của sự việc — bỏ qua phần này nếu bài không nêu rõ địa điểm]" rồi nêu NGẮN GỌN trong 1 câu nội dung chính, trọng tâm nhất của bài.
+Dòng 3: Đoạn tóm tắt đầy đủ nội dung bài báo, khoảng 60-80 từ tiếng Việt, súc tích, đúng trọng tâm, không lặp lại y nguyên dòng 2.
+
+Trả về DUY NHẤT 1 JSON array gồm ${items.length} chuỗi theo thứ tự (mỗi chuỗi gồm đủ 3 dòng nối bằng \\n). BẮT BUỘC: không thêm bất kỳ chữ nào khác ngoài JSON, không giải thích, không xin lỗi, không từ chối, không dùng markdown — kể cả khi nội dung bài báo nhạy cảm hay khó tóm tắt thì vẫn phải tóm tắt khách quan theo đúng cấu trúc trên.\n\n${prompt}`,
       }],
     }),
   });
@@ -173,7 +178,17 @@ async function aiSummarize(items, apiKey, model) {
   }
   const data = await resp.json();
   const text = (data.content || []).find((b) => b.type === 'text')?.text || '[]';
-  return JSON.parse(text.replace(/```json|```/g, '').trim());
+  const cleaned = text.replace(/```json|```/g, '').trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // AI lỡ thêm chữ thừa trước/sau JSON → tự tách phần mảng [ ... ] ra rồi thử lại
+    const m = cleaned.match(/\[[\s\S]*\]/);
+    if (m) {
+      try { return JSON.parse(m[0]); } catch (e2) { /* rơi xuống throw bên dưới */ }
+    }
+    throw new Error('AI trả về không đúng định dạng JSON: ' + cleaned.slice(0, 150));
+  }
 }
 
 module.exports = async function handler(req, res) {

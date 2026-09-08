@@ -16,7 +16,7 @@ const RSS = {
   thegioi:   'https://vnexpress.net/rss/the-gioi.rss',
   trongnuoc: 'https://vnexpress.net/rss/thoi-su.rss',
 };
-const MAX_ITEMS   = 8;
+const MAX_ITEMS   = 2;
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 phút
 const KV_PREFIX = 'bangtin_news_';
 

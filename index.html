@@ -537,8 +537,7 @@
     .news-summary-lbl { font-size: .72rem; font-weight: 700; letter-spacing:.1em; color:#1b5e20; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
     .news-summary-lbl::after { content:''; flex:1; height:1px; background:#a5d6a7; }
     .news-summary-txt { font-size: .93rem; color: #1a3300; line-height: 1.82; }
-    .news-summary-heading { font-size: .95rem; font-weight: 800; color: #0d3d12; text-transform: uppercase; line-height: 1.4; margin-bottom: 6px; }
-    .news-summary-lead { font-size: .88rem; font-style: italic; color: #2e5c1f; line-height: 1.6; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #a5d6a7; }
+    .news-summary-heading { font-size: .95rem; font-weight: 800; color: #0d3d12; text-transform: uppercase; line-height: 1.4; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #a5d6a7; }
     .news-skeleton {
       background: var(--cream); border-radius: 12px; border: 2px solid var(--border);
       padding: 20px; animation: pulse 1.4s infinite;
@@ -749,12 +748,6 @@
   ★ Bảng Tin Sư đoàn 324 &mdash; Dữ liệu 2026 ★<br>
   <span style="font-size:0.68rem;opacity:0.7">Phát triển bởi Đậu Quang Vũ CTV/C1/D16/F324</span>
 </footer>
-
-<!-- ══ AI CHAT BUBBLE — Mở ChatGPT để tóm tắt ══ -->
-<a class="ai-bubble" id="aiBubble" href="https://chatgpt.com" target="_blank" rel="noopener" title="Mở ChatGPT để tóm tắt bài báo">
-  🤖
-  <span class="ai-bubble-label">Mở ChatGPT → tóm tắt</span>
-</a>
 
 
 
@@ -1200,30 +1193,6 @@ function fmtPubDate(str) {
   } catch(e) { return str.slice(0,16); }
 }
 
-/* ── Toast thông báo copy ── */
-function showCopyToast(msg) {
-  let toast = document.getElementById('copyToast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'copyToast';
-    toast.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);' +
-      'background:#1b5e20;color:#fff;padding:8px 20px;border-radius:20px;font-size:.85rem;' +
-      'font-weight:700;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;';
-    document.body.appendChild(toast);
-  }
-  toast.textContent = msg || '✅ Đã sao chép link!';
-  toast.style.opacity = '1';
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 1800);
-}
-
-function copyLink(url) {
-  const prompt_text = `${url}\n\nTóm tắt tin tức thành 1 đoạn 50–100 từ theo mẫu: “Ngày..., tại..., ...” Yêu cầu: có tiêu đề, súc tích, logic, đúng trọng tâm, văn phong khoa học.`;
-  navigator.clipboard.writeText(prompt_text)
-    .then(() => showCopyToast('✅ Đã sao chép link + prompt!'))
-    .catch(() => { prompt('Copy nội dung này:', prompt_text); });
-}
-
 function renderNews(type, items) {
   const listId = type === 'thegioi' ? 'listTheGioi' : 'listTrongNuoc';
   const timeId = type === 'thegioi' ? 'timeTheGioi' : 'timeTrongNuoc';
@@ -1254,19 +1223,12 @@ function renderNews(type, items) {
       ${item.summary
         ? (() => {
             const parts = item.summary.split('\n').map(s => s.trim()).filter(Boolean);
-            if (parts.length >= 3) {
-              const [heading, lead, ...rest] = parts;
-              const body = rest.join(' ');
-              return `<div class="news-summary-block">
-                 <div class="news-summary-lbl">🤖 Tóm tắt nội dung</div>
-                 <div class="news-summary-heading">${heading}</div>
-                 <div class="news-summary-lead">${lead}</div>
-                 <div class="news-summary-txt">${body}</div>
-               </div>`;
-            }
+            const heading = parts[0] || item.title.toUpperCase();
+            const body = parts.slice(1).join(' ');
             return `<div class="news-summary-block">
                  <div class="news-summary-lbl">🤖 Tóm tắt nội dung</div>
-                 <div class="news-summary-txt">${item.summary}</div>
+                 <div class="news-summary-heading">${heading}</div>
+                 <div class="news-summary-txt">${body}</div>
                </div>`;
           })()
         : `<div class="news-excerpt">${item.excerpt || '(Không có mô tả.)'}</div>`
@@ -1276,10 +1238,6 @@ function renderNews(type, items) {
            style="font-size:.8rem;font-weight:700;color:var(--blue);text-decoration:none;border:1px solid #aed6f1;border-radius:20px;padding:3px 12px">
           🔗 Xem đầy đủ
         </a>
-        <button onclick="copyLink('${item.link}')"
-          style="font-size:.8rem;font-weight:700;background:#fff8e1;color:var(--text);border:1px solid var(--border);border-radius:20px;padding:3px 12px;cursor:pointer">
-          📋 Copy link + prompt
-        </button>
       </div>
     </div>`).join('');
 }

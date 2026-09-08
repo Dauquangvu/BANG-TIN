@@ -537,6 +537,8 @@
     .news-summary-lbl { font-size: .72rem; font-weight: 700; letter-spacing:.1em; color:#1b5e20; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
     .news-summary-lbl::after { content:''; flex:1; height:1px; background:#a5d6a7; }
     .news-summary-txt { font-size: .93rem; color: #1a3300; line-height: 1.82; }
+    .news-summary-heading { font-size: .95rem; font-weight: 800; color: #0d3d12; text-transform: uppercase; line-height: 1.4; margin-bottom: 6px; }
+    .news-summary-lead { font-size: .88rem; font-style: italic; color: #2e5c1f; line-height: 1.6; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #a5d6a7; }
     .news-skeleton {
       background: var(--cream); border-radius: 12px; border: 2px solid var(--border);
       padding: 20px; animation: pulse 1.4s infinite;
@@ -1250,10 +1252,23 @@ function renderNews(type, items) {
         <a class="news-title" href="${item.link}" target="_blank" rel="noopener">${item.title}</a>
       </div>
       ${item.summary
-        ? `<div class="news-summary-block">
-             <div class="news-summary-lbl">🤖 Tóm tắt nội dung</div>
-             <div class="news-summary-txt">${item.summary}</div>
-           </div>`
+        ? (() => {
+            const parts = item.summary.split('\n').map(s => s.trim()).filter(Boolean);
+            if (parts.length >= 3) {
+              const [heading, lead, ...rest] = parts;
+              const body = rest.join(' ');
+              return `<div class="news-summary-block">
+                 <div class="news-summary-lbl">🤖 Tóm tắt nội dung</div>
+                 <div class="news-summary-heading">${heading}</div>
+                 <div class="news-summary-lead">${lead}</div>
+                 <div class="news-summary-txt">${body}</div>
+               </div>`;
+            }
+            return `<div class="news-summary-block">
+                 <div class="news-summary-lbl">🤖 Tóm tắt nội dung</div>
+                 <div class="news-summary-txt">${item.summary}</div>
+               </div>`;
+          })()
         : `<div class="news-excerpt">${item.excerpt || '(Không có mô tả.)'}</div>`
       }
       <div class="news-readmore" style="padding:8px 18px 14px;display:flex;gap:10px;align-items:center;border-top:1px solid #e8d5a0">

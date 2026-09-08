@@ -88,10 +88,67 @@ async function cacheSet(type, value) {
   await kvSet(KV_PREFIX + type, value).catch(() => {});
 }
 
-// ── Tóm tắt AI (tuỳ chọn, chỉ gọi khi force-refresh) ──
+// ── Tải toàn văn bài báo (ưu tiên r.jina.ai — bóc nội dung sạch; dự phòng tải HTML trực tiếp) ──
+async function fetchArticleText(url) {
+  // 1) r.jina.ai — reader bóc nội dung chính, vượt được Cloudflare của một số báo
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(`https://r.jina.ai/${url}`, {
+      signal: controller.signal,
+      headers: { Accept: 'text/plain, */*', 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+    });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const raw = await res.text();
+      const cleaned = raw.split('\n')
+        .filter(l => !l.startsWith('Title:') && !l.startsWith('URL Source:') &&
+                     !l.startsWith('Published Time:') && !l.startsWith('Markdown Content:'))
+        .join('\n').trim();
+      if (cleaned.length > 200) return cleaned.slice(0, 5000);
+    }
+  } catch (e) { /* rơi xuống fallback */ }
+
+  // 2) Fallback — tải HTML trực tiếp rồi bóc chữ thô
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml',
+        'Accept-Language': 'vi-VN,vi;q=0.9,en;q=0.8',
+      },
+    });
+    clearTimeout(timeout);
+    const html = await res.text();
+    if (html.includes('Just a moment') || html.includes('cf-browser-verification') || html.includes('_cf_chl')) {
+      return null; // bị Cloudflare chặn
+    }
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
+      .replace(/\s{2,}/g, ' ').trim();
+    return text.length > 200 ? text.slice(0, 5000) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ── Tóm tắt AI (tuỳ chọn, chỉ gọi khi force-refresh) — đọc TOÀN VĂN bài báo trước khi tóm tắt ──
 async function aiSummarize(items, apiKey, model) {
+  // Tải toàn văn từng bài song song; bài nào tải lỗi thì dùng excerpt RSS làm dự phòng
+  const fullTexts = await Promise.all(items.map(it => fetchArticleText(it.link).catch(() => null)));
+
   const prompt = items
-    .map((it, i) => `BÀI ${i + 1}:\nTIÊU ĐỀ: ${it.title}\nMÔ TẢ: ${it.excerpt}`)
+    .map((it, i) => {
+      const body = fullTexts[i] || it.excerpt || '(không có nội dung)';
+      return `BÀI ${i + 1}:\nTIÊU ĐỀ: ${it.title}\nNỘI DUNG:\n${body}`;
+    })
     .join('\n\n---\n\n');
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -103,10 +160,10 @@ async function aiSummarize(items, apiKey, model) {
     },
     body: JSON.stringify({
       model,
-      max_tokens: 1200,
+      max_tokens: 1500,
       messages: [{
         role: 'user',
-        content: `Tóm tắt ngắn gọn MỖI bài sau bằng 3-4 câu tiếng Việt đầy đủ thông tin, súc tích, đúng trọng tâm. Trả về đúng 1 JSON array gồm ${items.length} chuỗi theo thứ tự, không thêm chữ nào khác ngoài JSON, không dùng markdown.\n\n${prompt}`,
+        content: `Đọc kỹ TOÀN VĂN mỗi bài báo sau và tóm tắt lại bằng 4-5 câu tiếng Việt đầy đủ ý chính, súc tích, đúng trọng tâm (không chỉ nhắc lại câu mở đầu). Trả về đúng 1 JSON array gồm ${items.length} chuỗi theo thứ tự, không thêm chữ nào khác ngoài JSON, không dùng markdown.\n\n${prompt}`,
       }],
     }),
   });
@@ -171,6 +228,7 @@ module.exports = async function handler(req, res) {
 
   // 3) Tóm tắt AI — chỉ khi force-refresh (nhập đúng mật khẩu) VÀ có ANTHROPIC_API_KEY
   let aiUsed = false;
+  let aiError = null;
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (forceRefresh && apiKey) {
     try {
@@ -180,7 +238,10 @@ module.exports = async function handler(req, res) {
       aiUsed = true;
     } catch (e) {
       console.warn('[news] AI summarize skip:', e.message);
+      aiError = e.message.slice(0, 200);
     }
+  } else if (forceRefresh && !apiKey) {
+    aiError = 'Chưa cấu hình ANTHROPIC_API_KEY trên Vercel';
   }
 
   const now = Date.now();
@@ -191,5 +252,6 @@ module.exports = async function handler(req, res) {
     updatedAt: new Date(now).toISOString(),
     fromCache: false,
     aiUsed,
+    aiError,
   });
 };

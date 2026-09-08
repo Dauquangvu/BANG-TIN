@@ -924,10 +924,21 @@ function currentWeekKey() {
   // Tìm Thứ Hai đầu tiên của tháng
   const firstDay = new Date(yr, month, 1);
   const firstIso = firstDay.getDay() === 0 ? 7 : firstDay.getDay(); // CN=7, T2=1..T7=6
-  const firstMonday = firstIso === 1 ? 1 : (9 - firstIso);
-  // Tuần: T2 đầu tiên trở đi chia 7, trước T2 đầu tiên = tuần 1
-  const weekNum = dayOfMonth < firstMonday ? 1 : Math.floor((dayOfMonth - firstMonday) / 7) + 1;
-  const key = `${yr}-${pad(month+1)}-W${weekNum}`;
+  let weekNum;
+  if (firstIso === 1) {
+    // Tháng bắt đầu đúng Thứ Hai -> không có tuần lẻ đầu tháng
+    weekNum = Math.floor((dayOfMonth - 1) / 7) + 1;
+  } else {
+    const firstMonday = 9 - firstIso;
+    // Trước Thứ Hai đầu tiên = tuần 1 (tuần lẻ đầu tháng); từ Thứ Hai đầu tiên trở đi bắt đầu từ tuần 2
+    weekNum = dayOfMonth < firstMonday ? 1 : 2 + Math.floor((dayOfMonth - firstMonday) / 7);
+  }
+  let key = `${yr}-${pad(month+1)}-W${weekNum}`;
+  // Nếu tuần tính ra vượt quá số tuần thực có dữ liệu trong tháng (cuối tháng) -> lùi về tuần gần nhất có dữ liệu
+  while (weekNum > 1 && !DATA_WEEKS[key]) {
+    weekNum -= 1;
+    key = `${yr}-${pad(month+1)}-W${weekNum}`;
+  }
   return DATA_WEEKS[key] ? key : allWeeks()[0];
 }
 function renderLuat(key) {

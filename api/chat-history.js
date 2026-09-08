@@ -37,7 +37,6 @@ async function kvSet(key, value) {
   const token = process.env.KV_REST_API_TOKEN;
   if (!base || !token) throw new Error('Thiếu KV_REST_API_URL / KV_REST_API_TOKEN trong Vercel environment');
 
-  const body = JSON.stringify(value);
   const res = await fetch(`${base}/set/${encodeURIComponent(key)}`, {
     method: 'POST',
     headers: {
@@ -45,7 +44,7 @@ async function kvSet(key, value) {
       'Content-Type': 'application/json',
     },
     // Giá trị phải là string với Vercel KV REST API
-    body: JSON.stringify(body),
+    body: JSON.stringify(value),
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => '');

@@ -37,14 +37,13 @@ async function kvSet(key, value) {
   const token = process.env.KV_REST_API_TOKEN;
   if (!base || !token) throw new Error('Thiếu KV_REST_API_URL / KV_REST_API_TOKEN trong Vercel environment');
 
-  const body = JSON.stringify(value);
   const res = await fetch(`${base}/set/${encodeURIComponent(key)}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(value),
   });
   if (!res.ok) {
     const txt = await res.text().catch(() => '');

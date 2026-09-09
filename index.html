@@ -597,12 +597,20 @@
   <!-- Divider -->
   <div class="tabs-divider" style="grid-column:1/-1"></div>
 </div>
+
 <!-- Row 2: 4 tabs in flex -->
 <div class="tabs-wrap tabs-row2-flex">
   <button class="tab-btn t2" data-tab="tab-mucdich">🏆 Mục Tiêu Thi Đua</button>
   <button class="tab-btn t2" data-tab="tab-donvi">🏢 Tin Đơn Vị</button>
   <button class="tab-btn t2" data-tab="tab-thegioi">🌍 Tin Thế Giới</button>
   <button class="tab-btn t2" data-tab="tab-trongnuoc">🇻🇳 Tin Trong Nước</button>
+</div>
+
+<div style="max-width:900px;margin:10px auto 0;padding:0 12px;display:flex;justify-content:flex-end">
+  <button onclick="exportWord()"
+    style="font-size:.82rem;font-weight:700;background:#1a3d1f;color:#f2d98a;border:1px solid #f2d98a;border-radius:20px;padding:7px 16px;cursor:pointer;display:flex;align-items:center;gap:6px">
+    🖨️ Xuất Word (in 2 mặt A4)
+  </button>
 </div>
 
 <main>
@@ -660,17 +668,31 @@
           <div class="hdate">Mục tiêu, chỉ tiêu — Năm 2026</div>
         </div>
       </div>
-      <div class="view-toggle">
-        <button id="btnFull" class="active" onclick="switchView('full')">📄 Toàn văn</button>
-      </div>
       <div class="mucdich-body">
-        <!-- Full text -->
-        <div id="mucdich-full" class="mucdich-full">Nội dung mục tiêu, chỉ tiêu:
-- Đơn vị duy trì thực hiện nghiêm chế độ SSCĐ; phối hợp, nắm, xử trí kịp thời, chính xác các tình huống, không để bị động bất ngờ; sẵn sàng tham gia khắc phục hậu quả thiên tai, cứu hộ, cứu nạn khi có tình huống.
-- 100% cán bộ huấn luyện được theo phân cấp, 2/2 cán bộ chủ trì đại đội, 85% cán bộ trung đội, cấp phó đại đội khá, giỏi (40% trở lên giỏi). HSQ chỉ huy sử dụng thành thạo VKTB có trong biên chế, nắm vững phương pháp điều hành luyện tập, sửa tập cho tiểu đội (khẩu đội). Tổ chức huấn luyện và kiểm tra các nội dung, kết quả kiểm tra 100% đạt yêu cầu, 85% trở lên khá, giỏi; 100% các bài bắn súng BB, HL khá, giỏi. Phấn đấu mỗi đại đội có 1-2 sáng kiến, cải tiến có chất lượng áp dụng vào huấn luyện. Diễn tập cấp trung đội, đại đội, Tiểu đoàn giỏi về kỹ thuật, khá về chiến thuật, an toàn tuyệt đối. Kiểm tra nhận thức chính trị 100% đạt yêu cầu, trên 78% khá, giỏi (20% giỏi), cán bộ chủ trì và cán bộ chính trị 100% khá, giỏi. Tổ chức và tham gia hội thi, hội thao các cấp đạt giải cao.
-- Tiếp tục nâng cao chất lượng xây dựng chính quy, rèn luyện kỷ luật và bảo đảm an toàn đơn vị; phấn đấu không để xảy ra vi phạm kỷ luật nghiêm trọng, vi phạm kỷ luật thông thường giảm mức thấp nhất. Thực hiện tốt công tác tổ chức lực lượng theo đúng quy định của cấp trên. 100% cán bộ, chiến sĩ có kiến thức, kỹ năng khai thác, sử dụng nền tảng số, dịch vụ số thiết yếu và biết bảo vệ bản thân trên môi trường số.
-- Lãnh đạo tốt công tác Hậu cần – kỹ thuật, nhất là đẩy mạnh củng cố vườn giàn, tăng gia sản xuất. Quân số khoẻ đạt 98,95% trở lên, không để xảy ra dịch bệnh trong đơn vị. Bảo đảm an toàn tuyệt đối kho, tủ và vũ khí trang bị kỹ thuật; duy trì hệ số kỹ thuật Kbđ = 1.
-- Xây dựng Chi bộ Đại đội hoàn thành xuất sắc nhiệm vụ; 100% cán bộ, đảng viên hoàn thành nhiệm vụ trở lên, 90% hoàn thành tốt và xuất sắc; kiểm tra, giám sát 01 – 02 đảng viên, 100% đảng viên có dấu hiệu vi phạm; kết nạp 01 - 02 quần chúng ưu tú vào Đảng; Chi đoàn hoàn thành tốt và xuất sắc nhiệm vụ.</div>
+        <div id="mucdich-full" class="mucdich-full">Đang tải…</div>
+      </div>
+      <div style="padding:0 18px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <span id="mucdichStatus" style="font-size:.78rem;color:#8a7550"></span>
+        <button onclick="openMttEdit()"
+          style="font-size:.8rem;font-weight:700;background:#fff3d6;color:#8a5a00;border:1px solid #e8c877;border-radius:20px;padding:5px 14px;cursor:pointer">
+          ✏️ Chỉnh sửa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL CHỈNH SỬA MỤC TIÊU THI ĐUA ══ -->
+  <div class="pwd-modal-bg" id="mttModalBg">
+    <div class="pwd-modal" style="max-width:560px">
+      <h3>✏️ Cập nhật Mục Tiêu Thi Đua</h3>
+      <textarea id="mttTextarea" rows="12"
+        style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;
+        padding:10px 12px;font-size:.92rem;font-family:inherit;line-height:1.5;resize:vertical;color:var(--text)"></textarea>
+      <input class="pwd-input" id="mttPwdInput" type="password" placeholder="Nhập mật khẩu để lưu…" autocomplete="off" style="margin-top:10px"/>
+      <div class="pwd-err" id="mttErr"></div>
+      <div class="pwd-btns">
+        <button class="pwd-cancel" id="mttCancel">Huỷ</button>
+        <button class="pwd-ok" id="mttSave">💾 Lưu</button>
       </div>
     </div>
   </div>
@@ -1153,12 +1175,99 @@ document.getElementById('donviModalBg').addEventListener('click', e => {
 });
 
 /* ════════════════════════════════════════════
-   TAB 4 — MỤC TIÊU THI ĐUA
+   TAB 4 — MỤC TIÊU THI ĐUA (dùng chung toàn hệ thống, lưu qua KV, đồng bộ mọi thiết bị)
 ════════════════════════════════════════════ */
-function switchView(mode) {
-  document.getElementById('mucdich-full').classList.toggle('hidden', mode !== 'full');
-  document.getElementById('btnFull').classList.toggle('active', mode === 'full');
+const MTT_DEFAULT = `Nội dung mục tiêu, chỉ tiêu:
+- Đơn vị duy trì thực hiện nghiêm chế độ SSCĐ; phối hợp, nắm, xử trí kịp thời, chính xác các tình huống, không để bị động bất ngờ; sẵn sàng tham gia khắc phục hậu quả thiên tai, cứu hộ, cứu nạn khi có tình huống.
+- 100% cán bộ huấn luyện được theo phân cấp, 2/2 cán bộ chủ trì đại đội, 85% cán bộ trung đội, cấp phó đại đội khá, giỏi (40% trở lên giỏi). HSQ chỉ huy sử dụng thành thạo VKTB có trong biên chế, nắm vững phương pháp điều hành luyện tập, sửa tập cho tiểu đội (khẩu đội). Tổ chức huấn luyện và kiểm tra các nội dung, kết quả kiểm tra 100% đạt yêu cầu, 85% trở lên khá, giỏi; 100% các bài bắn súng BB, HL khá, giỏi. Phấn đấu mỗi đại đội có 1-2 sáng kiến, cải tiến có chất lượng áp dụng vào huấn luyện. Diễn tập cấp trung đội, đại đội, Tiểu đoàn giỏi về kỹ thuật, khá về chiến thuật, an toàn tuyệt đối. Kiểm tra nhận thức chính trị 100% đạt yêu cầu, trên 78% khá, giỏi (20% giỏi), cán bộ chủ trì và cán bộ chính trị 100% khá, giỏi. Tổ chức và tham gia hội thi, hội thao các cấp đạt giải cao.
+- Tiếp tục nâng cao chất lượng xây dựng chính quy, rèn luyện kỷ luật và bảo đảm an toàn đơn vị; phấn đấu không để xảy ra vi phạm kỷ luật nghiêm trọng, vi phạm kỷ luật thông thường giảm mức thấp nhất. Thực hiện tốt công tác tổ chức lực lượng theo đúng quy định của cấp trên. 100% cán bộ, chiến sĩ có kiến thức, kỹ năng khai thác, sử dụng nền tảng số, dịch vụ số thiết yếu và biết bảo vệ bản thân trên môi trường số.
+- Lãnh đạo tốt công tác Hậu cần – kỹ thuật, nhất là đẩy mạnh củng cố vườn giàn, tăng gia sản xuất. Quân số khoẻ đạt 98,95% trở lên, không để xảy ra dịch bệnh trong đơn vị. Bảo đảm an toàn tuyệt đối kho, tủ và vũ khí trang bị kỹ thuật; duy trì hệ số kỹ thuật Kbđ = 1.
+- Xây dựng Chi bộ Đại đội hoàn thành xuất sắc nhiệm vụ; 100% cán bộ, đảng viên hoàn thành nhiệm vụ trở lên, 90% hoàn thành tốt và xuất sắc; kiểm tra, giám sát 01 – 02 đảng viên, 100% đảng viên có dấu hiệu vi phạm; kết nạp 01 - 02 quần chúng ưu tú vào Đảng; Chi đoàn hoàn thành tốt và xuất sắc nhiệm vụ.`;
+const MTT_STORE_KEY = 'mtt_cache_v1';
+let mttCurrentContent = MTT_DEFAULT;
+
+function saveMttCache(content, updatedAt) {
+  try { localStorage.setItem(MTT_STORE_KEY, JSON.stringify({ content, updatedAt })); } catch(e) {}
 }
+function loadMttCache() {
+  try {
+    const raw = localStorage.getItem(MTT_STORE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function renderMtt(content, updatedAt, isDefault) {
+  document.getElementById('mucdich-full').textContent = content || MTT_DEFAULT;
+  document.getElementById('mucdichStatus').textContent = isDefault
+    ? 'Nội dung mặc định — chưa được cập nhật'
+    : '✅ Cập nhật lúc ' + (updatedAt ? new Date(updatedAt).toLocaleString('vi-VN') : '');
+  mttCurrentContent = content || MTT_DEFAULT;
+}
+
+async function loadMtt() {
+  const cached = loadMttCache();
+  if (cached) renderMtt(cached.content, cached.updatedAt, !cached.updatedAt);
+  try {
+    const res = await fetch('/api/mtt');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const content = data.content || MTT_DEFAULT;
+    saveMttCache(content, data.updatedAt);
+    renderMtt(content, data.updatedAt, !data.updatedAt);
+  } catch(e) {
+    console.warn('Mục Tiêu Thi Đua: dùng dữ liệu cục bộ —', e.message);
+    if (!cached) renderMtt(MTT_DEFAULT, null, true);
+  }
+}
+
+function openMttEdit() {
+  document.getElementById('mttTextarea').value = mttCurrentContent;
+  document.getElementById('mttPwdInput').value = '';
+  document.getElementById('mttErr').style.display = 'none';
+  document.getElementById('mttModalBg').classList.add('open');
+  setTimeout(() => document.getElementById('mttTextarea').focus(), 100);
+}
+document.getElementById('mttCancel').addEventListener('click', () => {
+  document.getElementById('mttModalBg').classList.remove('open');
+});
+document.getElementById('mttSave').addEventListener('click', async () => {
+  const content = document.getElementById('mttTextarea').value.trim();
+  const pwd = document.getElementById('mttPwdInput').value.trim();
+  const errEl = document.getElementById('mttErr');
+  if (!content) { errEl.textContent = '❌ Nội dung không được để trống!'; errEl.style.display = 'block'; return; }
+  if (pwd !== NEWS_PWD) { errEl.textContent = '❌ Sai mật khẩu!'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('mttSave');
+  btn.disabled = true; btn.textContent = 'Đang lưu…';
+  try {
+    const res = await fetch('/api/mtt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, pwd }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'HTTP ' + res.status);
+    }
+    const data = await res.json();
+    const updatedAt = data.updatedAt || Date.now();
+    saveMttCache(content, updatedAt);
+    document.getElementById('mttModalBg').classList.remove('open');
+    renderMtt(content, updatedAt, false);
+  } catch(e) {
+    errEl.textContent = '❌ Lưu thất bại: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Lưu';
+  }
+});
+document.getElementById('mttPwdInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('mttSave').click();
+});
+document.getElementById('mttModalBg').addEventListener('click', e => {
+  if (e.target === document.getElementById('mttModalBg'))
+    document.getElementById('mttModalBg').classList.remove('open');
+});
 
 /* ════════════════════════════════════════════
    TABS 5 & 6 — NEWS (KHÔNG AUTO-CALL AI)
@@ -7919,6 +8028,9 @@ Promise.resolve([_EMBEDDED_BAC, _EMBEDDED_QA, _EMBEDDED_WEEKS]).then(([bac, qa, 
   // Init Tab — Tin Đơn Vị
   goDonvi(currentWeekKey());
 
+  // Init Tab 4 — Mục Tiêu Thi Đua
+  loadMtt();
+
   // Tự động tải tin khi vào trang — mọi thiết bị đều thấy tin từ server cache, không cần mật khẩu
   ['thegioi','trongnuoc'].forEach(type => {
     const cached = loadNewsCache(type);
@@ -7933,6 +8045,110 @@ Promise.resolve([_EMBEDDED_BAC, _EMBEDDED_QA, _EMBEDDED_WEEKS]).then(([bac, qa, 
   document.getElementById('qaCard').innerHTML   = msg;
   document.getElementById('luatCard').innerHTML = msg;
 });
+
+/* ════════════════════════════════════════════
+   XUẤT WORD — gộp toàn bộ nội dung hiện tại thành file .doc,
+   trình bày gọn trong 2 trang A4 (in 2 mặt 1 tờ giấy)
+════════════════════════════════════════════ */
+function escHtml(s) {
+  return (s || '').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function nlToHtml(s) {
+  return escHtml(s).replace(/\n/g,'<br>');
+}
+
+function exportWord() {
+  const bac = DATA_BAC[curBac] || {};
+  const qa  = DATA_QA[curQA] || {};
+  const wk  = DATA_WEEKS[curWeek] || {};
+  const donviCached = loadDonviCache(curDonviWeek);
+  const donviText = (donviCached && donviCached.content) || DONVI_DEFAULT;
+  const thegioiItems   = NEWS_CACHE['thegioi']   || loadNewsCache('thegioi')   || [];
+  const trongnuocItems = NEWS_CACHE['trongnuoc'] || loadNewsCache('trongnuoc') || [];
+
+  function newsBlockHtml(items) {
+    if (!items.length) return '<p style="margin:2px 0"><i>(Chưa có dữ liệu)</i></p>';
+    return items.map(it => {
+      if (it.summary) {
+        const parts = it.summary.split('\n').map(s=>s.trim()).filter(Boolean);
+        const heading = escHtml(parts[0] || it.title);
+        const body = escHtml(parts.slice(1).join(' '));
+        return `<p style="margin:4px 0 1px;font-weight:bold;text-transform:uppercase">${heading}</p>
+                <p style="margin:0 0 8px">${body}</p>`;
+      }
+      return `<p style="margin:4px 0 1px;font-weight:bold">${escHtml(it.title)}</p>
+              <p style="margin:0 0 8px">${escHtml(it.excerpt || '')}</p>`;
+    }).join('');
+  }
+
+  const todayStr = new Date().toLocaleDateString('vi-VN');
+
+  const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Bảng Tin Sư đoàn 324</title>
+<style>
+  @page { size: 21cm 29.7cm; margin: 1.1cm 1.3cm; }
+  body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.32; color:#000; }
+  h1 { font-size: 15pt; text-align:center; margin: 0 0 2px; text-transform:uppercase; }
+  h2 { font-size: 12.5pt; text-transform:uppercase; background:#eee; padding:3px 6px; margin: 10px 0 4px; border-left:4px solid #000; }
+  .sub { text-align:center; font-size:10pt; margin:0 0 10px; font-style:italic; }
+  .quote { font-style:italic; font-weight:bold; margin:2px 0 6px; }
+  p { margin: 2px 0; text-align: justify; }
+</style>
+</head>
+<body>
+
+<h1>Bảng Tin Sư đoàn 324 — Năm 2026</h1>
+<div class="sub">Lời Bác dạy — Câu hỏi ngày — Tuần pháp luật &nbsp;|&nbsp; Cập nhật: ${todayStr}</div>
+
+<h2>☭ Lời Bác Dạy${curBac ? ' — ' + formatDate(curBac) : ''}</h2>
+<p class="quote">${nlToHtml(bac.quote || '(Chưa có dữ liệu)')}</p>
+${bac.source  ? `<p><b>Nguồn gốc:</b> ${nlToHtml(bac.source)}</p>` : ''}
+${bac.context ? `<p><b>Ý nghĩa lịch sử:</b> ${nlToHtml(bac.context)}</p>` : ''}
+${bac.lesson  ? `<p><b>Vận dụng:</b> ${nlToHtml(bac.lesson)}</p>` : ''}
+
+<h2>❓ Câu Hỏi Ngày${curQA ? ' — ' + formatDate(curQA) : ''}</h2>
+<p><b>Câu hỏi:</b> ${nlToHtml(qa.cauhoi || '(Chưa có dữ liệu)')}</p>
+<p><b>Đáp án:</b> ${nlToHtml(qa.dapan || '')}</p>
+
+<h2>⚖️ Tuần Pháp Luật${wk.week ? ` — Tuần ${wk.week}, tháng ${wk.month}` : ''}</h2>
+<p><b>${escHtml(wk.title || '(Chưa có dữ liệu)')}</b></p>
+<p>${nlToHtml(wk.content || '')}</p>
+
+<br clear="all" style="page-break-before:always">
+
+<h1>Bảng Tin Sư đoàn 324 — Trang 2</h1>
+<div class="sub">Mục tiêu thi đua — Tin đơn vị — Tin tức &nbsp;|&nbsp; Cập nhật: ${todayStr}</div>
+
+<h2>🏆 Mục Tiêu Thi Đua</h2>
+<p>${nlToHtml(mttCurrentContent)}</p>
+
+<h2>🏢 Tin Đơn Vị</h2>
+<p>${nlToHtml(donviText)}</p>
+
+<h2>🌍 Tin Thế Giới</h2>
+${newsBlockHtml(thegioiItems)}
+
+<h2>🇻🇳 Tin Trong Nước</h2>
+${newsBlockHtml(trongnuocItems)}
+
+</body>
+</html>`;
+
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStamp = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `BangTin_${dateStamp}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
 </script>
 
 </body>

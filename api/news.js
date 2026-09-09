@@ -18,7 +18,6 @@ const RSS = {
 };
 const DISPLAY_ITEMS   = 2;  // số tin hiện ra cho người xem
 const CANDIDATE_ITEMS = 6;  // số tin ứng viên đưa AI đọc để chọn ra DISPLAY_ITEMS tin tốt nhất
-const CACHE_TTL_MS = 15 * 60 * 1000; // 15 phút
 const KV_PREFIX = 'bangtin_news_';
 
 // Cache tạm trong bộ nhớ — dùng khi chưa cấu hình KV (fallback, không đồng bộ nhiều thiết bị)
@@ -168,7 +167,7 @@ BƯỚC 1 — CHỌN: Chọn ra ĐÚNG ${DISPLAY_ITEMS} bài PHÙ HỢP NHẤT t
 
 BƯỚC 2 — TÓM TẮT: Với mỗi bài đã chọn, viết tóm tắt theo ĐÚNG cấu trúc gồm 2 phần, cách nhau bằng ký tự xuống dòng \\n:
 Phần 1: TIÊU ĐỀ BÀI VIẾT, VIẾT IN HOA TOÀN BỘ (không thêm số thứ tự).
-Phần 2: MỘT đoạn văn liền mạch (không xuống dòng, không tách câu riêng), khoảng 60-90 từ tiếng Việt, văn phong báo chí súc tích, BẮT BUỘC bắt đầu bằng cụm "Ngày [ngày/tháng cụ thể lấy đúng trong bài; nếu bài thật sự không nêu ngày thì dùng ngày đăng RSS đã cho ở trên, viết dạng d/m], tại [địa điểm cụ thể lấy đúng trong bài]," rồi tiếp tục kể lại đầy đủ diễn biến, nội dung chính, đúng trọng tâm. TUYỆT ĐỐI không được để trống bằng dấu ngoặc vuông hay ghi "không có/không rõ" — luôn phải điền một mốc thời gian và địa điểm cụ thể suy ra được từ bài.
+Phần 2: MỘT đoạn văn liền mạch (không xuống dòng, không tách câu riêng), khoảng 30-45 từ tiếng Việt (NGẮN GỌN, súc tích, chỉ nêu đúng ý chính cốt lõi nhất — không kể lể chi tiết phụ), văn phong báo chí, BẮT BUỘC bắt đầu bằng cụm "Ngày [ngày/tháng cụ thể lấy đúng trong bài; nếu bài thật sự không nêu ngày thì dùng ngày đăng RSS đã cho ở trên, viết dạng d/m], tại [địa điểm cụ thể lấy đúng trong bài]," rồi tiếp tục nêu NGẮN GỌN nội dung chính, đúng trọng tâm. TUYỆT ĐỐI không được để trống bằng dấu ngoặc vuông hay ghi "không có/không rõ" — luôn phải điền một mốc thời gian và địa điểm cụ thể suy ra được từ bài.
 
 Ví dụ đúng định dạng phần 2 (chỉ để tham khảo văn phong, không copy nội dung): "Ngày 7/9, tại phường Phước Tân, Đồng Nai, ôtô 7 chỗ lưu thông hướng Đồng Nai - TP HCM khi qua đoạn cao tốc đang sửa chữa đã tông biển cảnh báo, cọc tiêu rồi lao xuống phần đường bị đào thấp, sập hố ga. Vụ việc khiến hai bánh xe hư hỏng nặng, không gây thương vong. Cơ quan chức năng đang kiểm tra việc bố trí biển cảnh báo."
 
@@ -214,10 +213,11 @@ module.exports = async function handler(req, res) {
   const NEWS_PWD = process.env.NEWS_PWD || '324';
   const forceRefresh = req.query.pwd === NEWS_PWD;
 
-  // 1) Không force-refresh → thử đọc cache dùng chung trước (mọi thiết bị thấy giống nhau)
+  // 1) Không force-refresh → luôn ưu tiên đọc cache dùng chung (mọi thiết bị thấy giống nhau,
+  //    nội dung — kể cả tóm tắt AI — được GIỮ NGUYÊN cho tới khi có người bấm "Làm mới")
   if (!forceRefresh) {
     const cached = await cacheGet(type).catch(() => null);
-    if (cached && (Date.now() - cached.ts < CACHE_TTL_MS)) {
+    if (cached && cached.items && cached.items.length) {
       return res.status(200).json({
         items: cached.items,
         updatedAt: new Date(cached.ts).toISOString(),
@@ -225,6 +225,7 @@ module.exports = async function handler(req, res) {
         aiUsed: !!cached.aiUsed,
       });
     }
+    // Chưa có cache nào (lần đầu tiên, KV trống) → rơi xuống bên dưới để tải RSS thường 1 lần
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

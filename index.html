@@ -609,7 +609,7 @@
 <div style="max-width:900px;margin:10px auto 0;padding:0 12px;display:flex;justify-content:flex-end">
   <button onclick="exportWord()"
     style="font-size:.82rem;font-weight:700;background:#1a3d1f;color:#f2d98a;border:1px solid #f2d98a;border-radius:20px;padding:7px 16px;cursor:pointer;display:flex;align-items:center;gap:6px">
-    🖨️ Xuất Word
+    🖨️ Xuất Word (in 2 mặt A4)
   </button>
 </div>
 
@@ -8057,6 +8057,12 @@ function escHtml(s) {
 function nlToHtml(s) {
   return escHtml(s).replace(/\n/g,'<br>');
 }
+// Cố gắng lấy ngày (d/m/yyyy) từ đoạn nguồn gốc của Lời Bác dạy, để ghi chú thích ngắn gọn
+function extractDateFromText(s) {
+  if (!s) return '';
+  const m = (s || '').match(/ngày\s+(\d{1,2})\s*(?:tháng)?\s*(\d{1,2})\s*năm\s*(\d{4})/i);
+  return m ? `${m[1]}/${m[2]}/${m[3]}` : '';
+}
 
 function exportWord() {
   const bac = DATA_BAC[curBac] || {};
@@ -8067,73 +8073,89 @@ function exportWord() {
   const thegioiItems   = NEWS_CACHE['thegioi']   || loadNewsCache('thegioi')   || [];
   const trongnuocItems = NEWS_CACHE['trongnuoc'] || loadNewsCache('trongnuoc') || [];
 
+  // Tin thế giới / trong nước: TIÊU ĐỀ IN HOA (đậm) + xuống dòng + tab + nội dung, gộp 1 đoạn
   function newsBlockHtml(items) {
-    if (!items.length) return '<p style="margin:2px 0"><i>(Chưa có dữ liệu)</i></p>';
+    if (!items.length) return '<p>(Chưa có dữ liệu)</p>';
     return items.map(it => {
+      let heading, body;
       if (it.summary) {
         const parts = it.summary.split('\n').map(s=>s.trim()).filter(Boolean);
-        const heading = escHtml(parts[0] || it.title);
-        const body = escHtml(parts.slice(1).join(' '));
-        return `<p style="margin:4px 0 1px;font-weight:bold;text-transform:uppercase">${heading}</p>
-                <p style="margin:0 0 8px">${body}</p>`;
+        heading = escHtml(parts[0] || it.title.toUpperCase());
+        body = escHtml(parts.slice(1).join(' '));
+      } else {
+        heading = escHtml((it.title || '').toUpperCase());
+        body = escHtml(it.excerpt || '');
       }
-      return `<p style="margin:4px 0 1px;font-weight:bold">${escHtml(it.title)}</p>
-              <p style="margin:0 0 8px">${escHtml(it.excerpt || '')}</p>`;
-    }).join('');
+      return `<p class="body-p"><b>${heading}</b><br>\u0009${body}</p>`;
+    }).join('\n');
   }
 
-  const todayStr = new Date().toLocaleDateString('vi-VN');
+  // Mục Tiêu Thi Đua: dòng bắt đầu bằng "-" → in như gạch đầu dòng (tab + gạch), dòng khác → đoạn thường
+  function mucdichBulletsHtml(text) {
+    return (text || '').split('\n').map(line => {
+      line = line.trim();
+      if (!line) return '';
+      if (line.startsWith('-')) {
+        return `<p class="bullet-p">\u0009${escHtml(line)}</p>`;
+      }
+      return `<p class="body-p">${escHtml(line)}</p>`;
+    }).join('\n');
+  }
+
+  const qaDateStr = curQA ? (() => {
+    const [y,m,d] = curQA.split('-').map(Number);
+    return `Ngày ${String(d).padStart(2,'0')} tháng ${m} năm ${y}`;
+  })() : '';
+
+  const bacDateShort = extractDateFromText(bac.source);
 
   const html = `<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
 <head>
 <meta charset="utf-8">
-<title>Bảng Tin Sư đoàn 324</title>
+<title>Bảng Tin</title>
 <style>
-  @page { size: 21cm 29.7cm; margin: 1.1cm 1.3cm; }
-  body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.32; color:#000; }
-  h1 { font-size: 15pt; text-align:center; margin: 0 0 2px; text-transform:uppercase; }
-  h2 { font-size: 12.5pt; text-transform:uppercase; background:#eee; padding:3px 6px; margin: 10px 0 4px; border-left:4px solid #000; }
-  .sub { text-align:center; font-size:10pt; margin:0 0 10px; font-style:italic; }
-  .quote { font-style:italic; font-weight:bold; margin:2px 0 6px; }
-  p { margin: 2px 0; text-align: justify; }
+  @page { size: 8.5in 11in; margin: 1in; }
+  body { font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.15; color:#000; }
+  .center { text-align:center; }
+  .bold   { font-weight:bold; }
+  h2      { font-size:16pt; font-weight:bold; text-align:center; margin:12pt 0 2pt; }
+  .body-p   { margin:0; text-align:justify; text-indent:0.5in; }
+  .bullet-p { margin:0; text-align:justify; }
+  .qa-date  { text-align:center; color:#0F4761; font-size:16pt; margin:12pt 0 2pt; }
+  .qa-label { text-decoration:underline; }
+  .qa-p     { margin:0; text-align:justify; text-indent:0.5in; }
 </style>
 </head>
 <body>
 
-<h1>Bảng Tin Sư đoàn 324 — Năm 2026</h1>
-<div class="sub">Lời Bác dạy — Câu hỏi ngày — Tuần pháp luật &nbsp;|&nbsp; Cập nhật: ${todayStr}</div>
+<p class="center bold">PHONG TRÀO THI ĐUA NĂM 2026</p>
+<p class="center bold">“Đoàn kết, kỷ cương, đột phá, sáng tạo, Quyết thắng”</p>
+<p class="body-p"><b>1. Chủ đề thi đua:</b> <i>“Đoàn kết, kỷ cương, đột phá, sáng tạo, quyết thắng”</i>. </p>
+<p class="body-p"><b>2. Thời gian:</b> Từ 01/01/2026 đến 31/12/2026.</p>
+${mucdichBulletsHtml(mttCurrentContent)}
 
-<h2>☭ Lời Bác Dạy${curBac ? ' — ' + formatDate(curBac) : ''}</h2>
-<p class="quote">${nlToHtml(bac.quote || '(Chưa có dữ liệu)')}</p>
-${bac.source  ? `<p><b>Nguồn gốc:</b> ${nlToHtml(bac.source)}</p>` : ''}
-${bac.context ? `<p><b>Ý nghĩa lịch sử:</b> ${nlToHtml(bac.context)}</p>` : ''}
-${bac.lesson  ? `<p><b>Vận dụng:</b> ${nlToHtml(bac.lesson)}</p>` : ''}
-
-<h2>❓ Câu Hỏi Ngày${curQA ? ' — ' + formatDate(curQA) : ''}</h2>
-<p><b>Câu hỏi:</b> ${nlToHtml(qa.cauhoi || '(Chưa có dữ liệu)')}</p>
-<p><b>Đáp án:</b> ${nlToHtml(qa.dapan || '')}</p>
-
-<h2>⚖️ Tuần Pháp Luật${wk.week ? ` — Tuần ${wk.week}, tháng ${wk.month}` : ''}</h2>
-<p><b>${escHtml(wk.title || '(Chưa có dữ liệu)')}</b></p>
-<p>${nlToHtml(wk.content || '')}</p>
-
-<br clear="all" style="page-break-before:always">
-
-<h1>Bảng Tin Sư đoàn 324 — Trang 2</h1>
-<div class="sub">Mục tiêu thi đua — Tin đơn vị — Tin tức &nbsp;|&nbsp; Cập nhật: ${todayStr}</div>
-
-<h2>🏆 Mục Tiêu Thi Đua</h2>
-<p>${nlToHtml(mttCurrentContent)}</p>
-
-<h2>🏢 Tin Đơn Vị</h2>
-<p>${nlToHtml(donviText)}</p>
-
-<h2>🌍 Tin Thế Giới</h2>
+<h2>TIN THẾ GIỚI</h2>
 ${newsBlockHtml(thegioiItems)}
 
-<h2>🇻🇳 Tin Trong Nước</h2>
+<h2>TIN TRONG NƯỚC</h2>
 ${newsBlockHtml(trongnuocItems)}
+
+<h2>LỜI HAY Ý ĐẸP</h2>
+<p class="body-p">\u0009"${nlToHtml(bac.quote || '(Chưa có dữ liệu)')}".</p>
+<p class="center bold">Chủ tịch Hồ Chí Minh${bacDateShort ? ' - ' + bacDateShort : ''}.</p>
+
+<h2>TIN ĐƠN VỊ</h2>
+<p class="body-p">${nlToHtml(donviText)}</p>
+
+<p class="qa-date">${qaDateStr}</p>
+<p class="qa-p"><span class="qa-label">Câu hỏi:</span></p>
+<p class="qa-p">${nlToHtml(qa.cauhoi || '(Chưa có dữ liệu)')}</p>
+<p class="qa-p"><span class="qa-label">Đáp án:</span></p>
+<p class="qa-p">${nlToHtml(qa.dapan || '')}</p>
+
+<h2>MỖI TUẦN MỘT ĐIỀU LUẬT</h2>
+<p class="body-p bold">\u0009- Tuần ${wk.week || ''} tháng ${wk.month || ''}: ${nlToHtml(wk.title || '(Chưa có dữ liệu)')}<br>${nlToHtml(wk.content || '')}</p>
 
 </body>
 </html>`;
